@@ -1,16 +1,22 @@
 /**
- * PingMe 签到脚本（Egern 开关版）
- * 开关：$env.ENABLE_SIGN
- * 原脚本：怎么肥事 / 奶思 / fmz200
+ * PingMe 签到脚本（Egern开关版 - 安全）
+ * 开关变量 ENABLE_SIGN
  */
 
 // ========== 开关判断 ==========
-const ENABLE_SIGN = $env.ENABLE_SIGN ?? 'true';
-if (ENABLE_SIGN !== 'true') {
-    $done();
-}
+(() => {
+    let enable = true;
+    try {
+        if (typeof $env !== 'undefined' && $env.ENABLE_SIGN === 'false') {
+            enable = false;
+        }
+    } catch (e) {}
+    if (!enable) {
+        $done();
+    }
+})();
 
-// ========== 以下是原始 pms.js 完整内容 ==========
+// ========== 以下是原始 pms.js 全部代码（无删减） ==========
 const $ = new Env('PingMe签到');
 const isNode = $.isNode();
 const notify = isNode ? require('./sendNotify') : '';
@@ -48,7 +54,6 @@ async function startTasks() {
 
     function doVideoLoop(count) {
         let i = 0;
-
         function next() {
             if (i >= count) return Promise.resolve();
             return new Promise(resolve => {
@@ -75,7 +80,6 @@ async function startTasks() {
                 }, i === 0 ? 1500 : VIDEO_DELAY);
             });
         }
-
         return next();
     }
 
