@@ -11,12 +11,12 @@ icon: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.p
 env_schema:
   COOKIE_BTN:
     name: "获取Cookie"
-    description: "开启后，打开PingMe App自动抓取登录态"
+    description: "开启后，打开PingMe自动抓取登录参数"
     default_value: "true"
     options: ["true", "false"]
   SIGN_BTN:
     name: "签到"
-    description: "开启后，每天8:30和20:30自动签到"
+    description: "开启后，每天 8:30 / 20:30 自动签到+视频奖励"
     default_value: "true"
     options: ["true", "false"]
 
