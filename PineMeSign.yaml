@@ -1,0 +1,39 @@
+/**********************************
+ * PingMe 签到脚本
+ * 开关：$env.ENABLE_SIGN
+ * Cookie读取：$persistentStore
+ **********************************/
+
+const enableSign = $env.ENABLE_SIGN ?? 'true';
+if (enableSign !== 'true') {
+    $done(); // 开关关闭，不签到
+}
+
+const cookieKey = 'PingMeCookie';
+const cookie = $persistentStore.read(cookieKey);
+if (!cookie) {
+    $notification.post('PingMe 签到', '失败 ❌', '未找到 Cookie，请先开启获取并打开 App');
+    $done();
+}
+
+// 签到接口（需根据实际接口调整）
+const signUrl = 'https://api.pingmeapp.net/app/sign'; // 示例，请确认实际地址
+const headers = {
+    'Cookie': cookie,
+    'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X)',
+};
+
+$httpClient.post(signUrl, {}, headers, (error, response, body) => {
+    if (error) {
+        $notification.post('PingMe 签到', '网络错误', error);
+    } else {
+        const result = JSON.parse(body);
+        // 根据实际返回结构调整
+        if (result.code === 0) {
+            $notification.post('PingMe 签到', '成功 ✅', `获得积分：${result.data.points || '未知'}`);
+        } else {
+            $notification.post('PingMe 签到', '失败', result.msg || body);
+        }
+    }
+    $done();
+});
