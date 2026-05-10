@@ -1,7 +1,7 @@
-#!name = 同程旅行
-#!desc = 获取Cookie与自动签到（需搭配BoxJs）
-#!author = 樱花
-#!icon = https://raw.githubusercontent.com/Orz-3/mini/master/TongCheng.png
+name = 同程旅行
+description = 获取Cookie与自动签到（需搭配BoxJs）
+author = 樱花
+icon = https://raw.githubusercontent.com/Orz-3/mini/master/TongCheng.png
 
 env_schema:
   COOKIE_BTN:
