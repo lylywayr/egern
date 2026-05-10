@@ -3,15 +3,20 @@
 #!author = 樱花
 #!icon = https://raw.githubusercontent.com/Orz-3/mini/master/TongCheng.png
 
+name: "同程旅行"
+description: "获取Cookie与自动签到（需搭配BoxJs）"
+author: "樱花"
+icon: "https://raw.githubusercontent.com/Orz-3/mini/master/TongCheng.png"
+
 env_schema:
   COOKIE_BTN:
-    name: 获取Cookie
-    description: 开启后，访问同程页面时将自动抓取登录态
+    name: "获取Cookie"
+    description: "开启后，访问同程页面时将自动抓取登录态"
     default_value: "true"
     options: ["true", "false"]
   SIGN_BTN:
-    name: 签到
-    description: 开启后，每天9:00自动执行签到
+    name: "签到"
+    description: "开启后，每天9:00自动执行签到"
     default_value: "true"
     options: ["true", "false"]
 
