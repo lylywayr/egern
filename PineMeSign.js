@@ -1,22 +1,29 @@
 /**
- * PingMe 签到脚本（Egern开关版 - 安全）
- * 开关变量 ENABLE_SIGN
+ * PingMe 签到脚本（Egern 开关版）
+ * 开关变量：ENABLE_SIGN，通过模块 env_schema 传入
+ * 原始脚本 by 怎么肥事 / 奶思，fmz200 修改
  */
 
-// ========== 开关判断 ==========
+// ============ 开关判断（兼容多平台） ============
 (() => {
     let enable = true;
     try {
-        if (typeof $env !== 'undefined' && $env.ENABLE_SIGN === 'false') {
-            enable = false;
-        }
+        if (typeof ctx !== 'undefined' && ctx.env && ctx.env.ENABLE_SIGN === 'false') enable = false;
+        if (typeof $env !== 'undefined' && $env.ENABLE_SIGN === 'false') enable = false;
     } catch (e) {}
     if (!enable) {
-        $done();
+        if (typeof $done === 'function') $done();
     }
 })();
 
-// ========== 以下是原始 pms.js 全部代码（无删减） ==========
+/********************************
+PingMe 自动化签到+视频奖励
+@Name：PingMe 自动化签到+视频奖励
+@Author：怎么肥事 https://raw.githubusercontent.com/ZenmoFeiShi/Qx/refs/heads/main/PingMe.js
+@modify 奶思做了修改，理论支持 Qx,Loon,Surge,Egern,ShadowRocket,青龙
+@date 2026-04-17 14:00:00
+********************************/
+
 const $ = new Env('PingMe签到');
 const isNode = $.isNode();
 const notify = isNode ? require('./sendNotify') : '';
@@ -27,6 +34,7 @@ const SECRET = '0fOiukQq7jXZV2GRi9LGlO';
 const MAX_VIDEO = 5;
 const VIDEO_DELAY = 8000;
 
+// 执行开始
 startTasks().then(r => $.done());
 
 async function startTasks() {
@@ -54,6 +62,7 @@ async function startTasks() {
 
     function doVideoLoop(count) {
         let i = 0;
+
         function next() {
             if (i >= count) return Promise.resolve();
             return new Promise(resolve => {
@@ -80,6 +89,7 @@ async function startTasks() {
                 }, i === 0 ? 1500 : VIDEO_DELAY);
             });
         }
+
         return next();
     }
 
