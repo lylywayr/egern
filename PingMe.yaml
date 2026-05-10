@@ -1,5 +1,5 @@
 #!name = PingMe
-#!desc = 获取Cookie与自动签到（无需BoxJs）
+#!desc = 获取Cookie与自动签到
 #!author = fmz200
 #!icon = https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png
 
@@ -8,17 +8,15 @@ description: "获取Cookie与自动签到"
 author: "fmz200"
 icon: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png"
 
-env_schema:
-  COOKIE_BTN:
-    name: "获取Cookie"
-    description: "开启后，打开PingMe自动抓取登录参数（成功后建议关闭）"
-    default_value: "true"
-    options: ["true", "false"]
-  SIGN_BTN:
-    name: "签到"
-    description: "开启后，每天 8:30 / 20:30 自动运行签到"
-    default_value: "true"
-    options: ["true", "false"]
+params:
+  - name: COOKIE_BTN
+    type: string
+    default: ""
+    description: "输入 # 关闭Cookie获取，留空则开启"
+  - name: SIGN_BTN
+    type: string
+    default: ""
+    description: "输入 # 关闭签到，留空则开启"
 
 scriptings:
   - http_request:
@@ -26,15 +24,13 @@ scriptings:
       match: ^https?:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
       script_url: https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/PingMeCookie.js
       timeout: 60
-      env:
-        ENABLE_COOKIE: "{{ .env.COOKIE_BTN }}"
+      disabled: {{ eq .params.COOKIE_BTN "#" }}
   - schedule:
       name: PingMe签到
       cron: "30 8,20 * * *"
       script_url: https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/PineMeSign.js
       timeout: 300
-      env:
-        ENABLE_SIGN: "{{ .env.SIGN_BTN }}"
+      disabled: {{ eq .params.SIGN_BTN "#" }}
 
 mitm:
   hostnames:
