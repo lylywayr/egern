@@ -3,38 +3,36 @@
 #!author = fmz200
 #!icon = https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png
 
+name: "PingMe"
+description: "获取Cookie与自动签到（需搭配BoxJs）"
+author: "fmz200"
+icon: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png"
+
 env_schema:
   COOKIE_BTN:
-    name: 获取Cookie
-    description: 开启后，访问PingMe相关页面将自动抓取登录态
+    name: "获取Cookie"
+    description: "开启后，访问PingMe相关页面将自动抓取登录态"
     default_value: "true"
     options: ["true", "false"]
   SIGN_BTN:
-    name: 签到
-    description: 开启后，每天8:30和20:30自动执行签到
+    name: "签到"
+    description: "开启后，每天8:30和20:30自动执行签到"
     default_value: "true"
     options: ["true", "false"]
 
 scriptings:
-  # Cookie 获取脚本
   - http_request:
       name: PingMe获取Cookie
       match: ^https?:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
       script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
       timeout: 60
       enabled: "{{ .env.COOKIE_BTN == 'true' }}"
-      env:
-        SCRIPT_ACTION: "get_cookie"
-
-  # 签到定时脚本
   - schedule:
       name: PingMe签到
       cron: "30 8,20 * * *"
       script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
       timeout: 300
       enabled: "{{ .env.SIGN_BTN == 'true' }}"
-      env:
-        SCRIPT_ACTION: "sign"
 
 mitm:
   hostnames:
