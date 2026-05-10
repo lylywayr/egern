@@ -11,7 +11,7 @@ icon: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.p
 env_schema:
   COOKIE_BTN:
     name: "获取Cookie"
-    description: "开启后，访问PingMe相关页面将自动抓取登录态"
+    description: "开启后，访问PingMe相关页面将自动抓取登录态（关闭则停止抓取）"
     default_value: "true"
     options: ["true", "false"]
   SIGN_BTN:
@@ -26,13 +26,13 @@ scriptings:
       match: ^https?:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
       script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
       timeout: 60
-      enabled: "{{ .env.COOKIE_BTN == 'true' }}"
+      enabled: "{{ .env.COOKIE_BTN }}"
   - schedule:
       name: PingMe签到
       cron: "30 8,20 * * *"
       script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
       timeout: 300
-      enabled: "{{ .env.SIGN_BTN == 'true' }}"
+      enabled: "{{ .env.SIGN_BTN }}"
 
 mitm:
   hostnames:
