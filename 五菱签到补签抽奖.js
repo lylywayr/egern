@@ -1,8 +1,8 @@
 // ==UserAgent==
-// @name         五菱签到-定时签到补签抽奖
-// @namespace    wuling_sign_daily
-// @description  定时签到，自动补签，自动抽奖
-// @version      1.0
+// @name         五菱签到-定时签到补签（含Ling值提醒）
+// @namespace    wuling_sign_daily_v2
+// @description  定时签到，自动补签，获取Ling值并通知
+// @version      2.0
 // @author       你的名字
 // @cron         0 8 * * *   // 每天8点执行，可自行修改
 // @background   true
@@ -37,6 +37,22 @@ function httpPost(url, body, headers) {
   });
 }
 
+// 获取当前Ling值
+async function getUserLing(originalToken, userIdStr, headers) {
+  let body = 'scene=&originalToken=' + encodeURIComponent(originalToken) + '&userIdStr=' + encodeURIComponent(userIdStr);
+  try {
+    let resp = await httpPost(baseUrl + '/sign2023/api/user-ling', body, headers);
+    let data = JSON.parse(resp);
+    if (data.success) {
+      return data.result.userLing || 0;
+    } else {
+      throw new Error(data.msg || '获取Ling值失败');
+    }
+  } catch (e) {
+    throw e;
+  }
+}
+
 // -------------------- 主流程 --------------------
 async function main() {
   let cookie = getStoredValue(cookieKey);
@@ -56,7 +72,16 @@ async function main() {
     'Referer': baseUrl + '/task2021/index'
   };
 
-  // 1. 获取签到状态
+  // 1. 记录签到前的Ling值
+  let preLing;
+  try {
+    preLing = await getUserLing(originalToken, userIdStr, headers);
+  } catch (e) {
+    notify('五菱签到', '获取Ling值失败', String(e));
+    return;
+  }
+
+  // 2. 获取签到状态（可能自动签到）
   let infoBody = 'scene=&originalToken=' + encodeURIComponent(originalToken) + '&userIdStr=' + encodeURIComponent(userIdStr);
   let infoResp;
   try {
@@ -80,29 +105,20 @@ async function main() {
   }
 
   let signData = infoData.result.signData || {};
-  let curSignCount = signData.cur_sign_count || 0;
-  let maxSignCount = signData.max_sign_count || 0;
-  let totalSignCount = signData.total_sign_count || 0;
-  let lotteryCount = signData.lottery_count || 0;
-  let lottery25Count = signData.lottery25_count || 0;
   let dateHis = signData.date_his || [];
   let addCardNum = signData.add_card_num || 0;
 
-  // 2. 判断今日是否已签到
+  // 3. 判断今日是否已签到
   let today = new Date();
   let todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
-
   let isSignedToday = dateHis.includes(todayStr);
   let signedMsg = '';
 
-  // 3. 执行签到或补签
   if (!isSignedToday) {
-    // 未签到 -> 执行签到（目前看起来是自动的，这里调用info后已自动签到，但为了保险可以写签到逻辑，实际可能已自动完成）
-    signedMsg = '今日签到成功';
+    signedMsg = '今日签到成功（已自动触发）';
   } else {
     // 已签到 -> 检查补签卡并自动补签
     if (addCardNum > 0) {
-      // 找到漏签的日期
       let missedDate = '';
       let checkDate = new Date(today);
       while (true) {
@@ -114,7 +130,6 @@ async function main() {
         }
       }
       if (missedDate) {
-        // 执行补签
         let supBody = 'sup_day=' + missedDate + '&scene=&originalToken=' + encodeURIComponent(originalToken) + '&userIdStr=' + encodeURIComponent(userIdStr);
         try {
           let supResp = await httpPost(baseUrl + '/sign2023/api/sup-sign', supBody, headers);
@@ -133,7 +148,7 @@ async function main() {
     }
   }
 
-  // 再次获取状态（签到或补签后状态可能有变化）
+  // 4. 再次获取签到状态（刷新数据）
   let finalInfoResp;
   try {
     finalInfoResp = await httpPost(baseUrl + '/sign2023/api/info', infoBody, headers);
@@ -150,29 +165,33 @@ async function main() {
   }
   if (finalInfoData.success) {
     signData = finalInfoData.result.signData || {};
-    curSignCount = signData.cur_sign_count || 0;
-    maxSignCount = signData.max_sign_count || 0;
-    totalSignCount = signData.total_sign_count || 0;
-    lotteryCount = signData.lottery_count || 0;
-    lottery25Count = signData.lottery25_count || 0;
-    dateHis = signData.date_his || [];
-    addCardNum = signData.add_card_num || 0;
   }
 
-  // 4. 抽奖（如果有可用次数）
-  let lotteryMsg = '';
-  if (lotteryCount > 0 || lottery25Count > 0) {
-    // 这里假设抽奖接口，实际可能需要根据页面逻辑调用具体抽奖API，此处占位（因抓包未提供抽奖接口，需要自行抓取）
-    lotteryMsg = '当前抽奖次数：普通' + lotteryCount + '次，25次抽奖' + lottery25Count + '次。抽奖接口暂未实现，请手动抽奖。';
-  } else {
-    lotteryMsg = '当前无可用抽奖次数';
+  // 5. 记录签到后的Ling值
+  let postLing;
+  try {
+    postLing = await getUserLing(originalToken, userIdStr, headers);
+  } catch (e) {
+    notify('五菱签到', '获取Ling值失败', String(e));
+    return;
   }
 
-  // 5. 通知汇总
+  let curSignCount = signData.cur_sign_count || 0;
+  let maxSignCount = signData.max_sign_count || 0;
+  let totalSignCount = signData.total_sign_count || 0;
+  let lotteryCount = signData.lottery_count || 0;
+  let lottery25Count = signData.lottery25_count || 0;
+  let addCardNumFinal = signData.add_card_num || 0;
+
+  let todayLing = postLing - preLing;
+
+  // 6. 构建通知消息
   let notifyMsg = signedMsg + '\n';
   notifyMsg += '连续签到：' + curSignCount + '天，最长连续：' + maxSignCount + '天，总计签到：' + totalSignCount + '天\n';
-  notifyMsg += '补签卡剩余：' + addCardNum + '张\n';
-  notifyMsg += lotteryMsg;
+  notifyMsg += '补签卡剩余：' + addCardNumFinal + '张\n';
+  notifyMsg += '签到前Ling值：' + preLing + '，签到后Ling值：' + postLing + '，今日新增：' + todayLing + '\n';
+  notifyMsg += '当前累计Ling值：' + postLing + '\n';
+  notifyMsg += '普通抽奖次数：' + lotteryCount + '，25次抽奖次数：' + lottery25Count + '（抽奖接口待完善）';
 
   notify('五菱签到', '签到报告', notifyMsg);
 }
