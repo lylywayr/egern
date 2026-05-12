@@ -1,4 +1,4 @@
-/********************** 五菱签到补签抽奖.js ***********************
+/********************** 五菱签到补签抽奖.js (签到已修正) ***********************
  *  功能：
  *   1. MITM 触发：智能抓取凭证（Cookie 有效不抓取，无效才抓取并通知）
  *   2. 定时任务：检查 Cookie 有效性，执行签到、补签、抽奖提醒
@@ -9,6 +9,8 @@
  *     ^https://operation\.wuling\.com\/sign2023\/api\/info
  *   - 添加定时任务（每天 8:00）：
  *     cron "0 8 * * *" script-path=本脚本路径
+ *
+ *  [修正] 签到接口已改为手动抓包的真实请求 /api/showed
  ***************************************************************/
 
 // ===================== 通用工具函数 =====================
@@ -97,7 +99,8 @@ function notify(title, subtitle, message) {
 // ===================== 业务常量 =====================
 const URL = {
     info: 'https://operation.wuling.com/sign2023/api/info',
-    sign: 'https://operation.wuling.com/sign2023/api/sign',
+    // [修正] 签到接口改为抓包中的 /showed
+    sign: 'https://operation.wuling.com/sign2023/api/showed',
     lottery: 'https://operation.wuling.com/sign2023/api/lottery',
 };
 
@@ -212,9 +215,16 @@ function getUserInfo(callback) {
     postForm(URL.info, baseParams, { Cookie: storedCookie }, callback);
 }
 
-// 签到/补签
+// [修正] 签到/补签：签到使用新接口 /showed 且不传 stage；补签保留原逻辑
 function doSign(stage, callback) {
-    const params = { ...baseParams, stage: stage.toString() };
+    let params;
+    if (stage === 0) {
+        // 签到：仅传 baseParams，无 stage 字段
+        params = { ...baseParams };
+    } else {
+        // 补签：保留原有方式（可能需后续更新补签接口）
+        params = { ...baseParams, stage: stage.toString() };
+    }
     postForm(URL.sign, params, { Cookie: storedCookie }, callback);
 }
 
