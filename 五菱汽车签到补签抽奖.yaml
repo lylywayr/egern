@@ -1,0 +1,12 @@
+[General]
+#!name = 五菱签到
+#!desc = 五菱APP自动签到、补签、Ling值提醒与抽奖（抽奖待完善）
+#!author = 白茶
+#!icon = https://raw.githubusercontent.com/Orz-3/mini/master/Alpha/Kache.png
+
+[MITM]
+hostname = operation.wuling.com
+
+[Script]
+http-request ^https:\/\/operation\.wuling\.com\/sign2023\/api\/info script-path=https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/%E4%BA%94%E8%8F%B1Cookie%E7%AE%A1%E5%AE%B6.js requires-body=true tag=五菱Cookie管家
+cron "0 8 * * *" script-path=https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/%E4%BA%94%E8%8F%B1%E7%AD%BE%E5%88%B0%E8%A1%A5%E7%AD%BE%E6%8A%BD%E5%A5%96.js timeout=60 tag=五菱签到补签
