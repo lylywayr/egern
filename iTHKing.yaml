@@ -1,0 +1,638 @@
+ipv6: false
+allow_external_connections: false
+vif_only: true
+block_quic: true
+hide_vpn_icon: false
+geoip_db_url: https://github.com/xream/geoip/releases/latest/download/ipinfo.country.mmdb
+asn_db_url: https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-ASN.mmdb
+proxy_latency_test_url: http://www.apple.com/library/test/success.html
+direct_latency_test_url: http://wifi.vivo.com.cn/generate_204
+udp_latency_test_url: 8.8.8.8:53
+compat_route: true
+dns:
+  hosts:
+    iosapps.itunes.apple.com:
+    - iosapps.itunes.apple.com.download.ks-cdn.com
+    updates.cdn-apple.com:
+    - updates.cdn-apple.com.download.ks-cdn.com
+    updates.g.aaplimg.com:
+    - iosapps.itunes.apple.com.download.ks-cdn.com
+proxies:
+policy_groups:
+- external:
+    name: Sub-Store
+    type: select
+    urls:
+    - https://sub.store/download/collection/%E7%BB%84%E5%90%88%E8%AE%A2%E9%98%85?target=Egern
+    hidden: true
+- external:
+    name: TG 爬虫
+    type: select
+    urls:
+    - https://sub.store/download/telegram_1747791540707-copy3448?target=Egern
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Want_Want.png
+    hidden: false
+- select:
+    name: 节点集合
+    policies:
+    - Sub-Store
+    - TG 爬虫
+    - XFSS
+    - 国际机场
+    flatten: true
+    filter: (?!.^((?!Remain|Expired|官网|免费|过期|如需|套餐|去除|剩余|距离|Reset|重置|流量).)+$
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/03CNSoft/OneDrive(1).png
+    hidden: true
+- select:
+    name: Apple
+    policies:
+    - DIRECT
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 专线节点
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/03CNSoft/apple(1).png
+    hidden: false
+- select:
+    name: Ai
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 专线节点
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/chatgpt4.0.png
+    hidden: false
+- select:
+    name: Telegram
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Telegram.png
+    hidden: false
+- select:
+    name: TikTok
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/04ProxySoft/tiktok(1).png
+    hidden: false
+- select:
+    name: GitHub
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/GitHub.png
+    hidden: false
+- select:
+    name: Google
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Google.png
+    hidden: false
+- select:
+    name: Microsoft
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 专线节点
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/Microsoft.png
+    hidden: false
+- select:
+    name: GlobalMedia
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/03CNSoft/jellyfin.png
+    hidden: false
+- select:
+    name: Final
+    policies:
+    - 自建集合
+    - HK-Server
+    - TW-Server
+    - SG-Server
+    - JP-Server
+    - US-Server
+    - KR-Server
+    - 荷兰节点
+    - 印度节点
+    - 德国节点
+    - 英国节点
+    - 澳大利亚
+    - 其他节点
+    flatten: false
+    icon: https://raw.githubusercontent.com/Orz-3/mini/master/Color/SSID.png
+    hidden: false
+- smart:
+    name: HK-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: ^(?!.*×).*(?:🇭🇰|Hong Kong|Hong|HK|HKG|香港).*$
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Hong_Kong.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: TW-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇹🇼|台湾|Taiwan|TW|Tai
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Taiwan.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: SG-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇸🇬|新加坡|Singapore|SG
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Singapore.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: JP-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: \b(?!.*×)\b(🇯🇵|日本|Japan|JP)\b
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Japan.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: US-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇺🇸|美国|United States|USA|US|States
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Russia.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: KR-Server
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇰🇷|韩国|Korea|KR
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/United_States.png
+    hidden: false
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 荷兰节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇳🇱|荷兰|NLD|NL
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Finland.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 印度节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇮🇳|印度|India|IND|IN
+    icon: https://iili.io/FaARol9.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 德国节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇩🇪|德国|DEU|DE
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Germany.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 英国节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: ^(?!.*剩余流量).*?(?:🇬🇧|英国|GBR|GB|EN)
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/United_Kingdom.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 澳大利亚
+    policies:
+    - 节点集合
+    flatten: true
+    filter: 🇦🇺|澳大利亚|Australia|AUS|AU
+    icon: https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Australia.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 专线节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: IEPL|IPLC|BGP
+    icon: https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/Twoandz9/Fast.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+- smart:
+    name: 其他节点
+    policies:
+    - 节点集合
+    flatten: true
+    filter: ^(?=.*(.))(?!.*((?i)群|🇮🇳|🇦🇺|澳大利亚|IEPL|IPLC|BGP|Australia|AUS|AU|🇩🇪|🇬🇧|英国|GBR|GB|EN|德国|DEU|DE|印度|India|IND|IN|邀请|🇳🇱|荷兰|NLD|NL|返利|广东|上海|浙江|北京|以下|回国|无|移动 |联通|电信| 循环|官网|客服|网站|网址|获取|订阅|流量|到期|机场|下次|版本|官址|备用|过期| 🇭🇰|香港| 🇯🇵|日本|川日|东京|大阪|泉日|埼玉|已用|联系|邮箱|工单|贩卖|通知|倒卖|防止|国内|地址|频道|🇸🇬|新加坡|狮|无法|说明|使用|提示|特别|访问|支持|教程|关注| 🇰🇷|韩国|韓|首尔|更新|作者|加入|🇺🇸|美国|波特兰|达拉斯|俄勒冈|凤凰城|费利蒙|硅谷|拉斯维加斯|洛杉矶|圣何塞|圣克拉拉|西雅图|芝加哥|超时|收藏|福利|邀请|🇹🇼|台湾|好友|失联|(\b(USE|USED|TOTAL|EXPIRE|EMAIL|Panel|SG|SGP|Singapore|HK|HKG|Hong|Channel|Author|TW|TWN|KR|KOR|Korea|Tai|Taiwan|US|USA|United States|Traffic)(\d+)?\b|(\d{4}-\d{2}-\d{2}|\dG)))).*$
+    icon: https://raw.githubusercontent.com/lige47/QuanX-icon-rule/main/icon/02ProxySoftLogo/Egern.png
+    hidden: true
+    priorities:
+      ^(?!.*×).*(?:专线).*$: 0.2
+      ^(?!.*×).*(?:BGP| 中转).*$: 0.5
+      ^(?!.*×).*(?:直连).*$: 0.8
+rules:
+- domain:
+    match: iosapps.itunes.apple.com.download.ks-cdn.com
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: SpeedtestInternational
+    match: https://kelee.one/Tool/Loon/Lsr/SpeedtestInternational.lsr
+    policy: Final
+    disabled: true
+- rule_set:
+    name: SpeedTestCN
+    match: https://kelee.one/Tool/Loon/Lsr/SpeedtestChina.lsr
+    policy: DIRECT
+    disabled: true
+- domain_suffix:
+    match: cdn.jsdelivr.net
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    match: https://github.com/Repcz/Tool/raw/X/Egern/Rules/Lan.yaml
+    policy: DIRECT
+- rule_set:
+    name: 秋风广告
+    match: https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-QuantumultX.list
+    policy: REJECT-DROP
+    disabled: false
+- rule_set:
+    name: AppleCN
+    match: https://github.com/Repcz/Tool/raw/X/Egern/Rules/AppleCN.yaml
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: 苹果服务
+    match: https://github.com/Repcz/Tool/raw/X/Egern/Rules/AppleServers.yaml
+    policy: Apple
+    disabled: false
+- rule_set:
+    name: Tencent
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Tencent/Tencent.list
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: XiaoHongShu
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/XiaoHongShu/XiaoHongShu.list
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: BiLiBiLi
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/BiliBili/BiliBili.list
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: 抖音
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/DouYin/DouYin.list
+    policy: DIRECT
+    disabled: false
+- rule_set:
+    name: Ai
+    match: https://github.com/Repcz/Tool/blob/X/Egern/Rules/AI.yaml
+    policy: Ai
+    disabled: false
+- domain_keyword:
+    name: Turrit
+    match: turrit
+    policy: Telegram
+    disabled: false
+- rule_set:
+    name: Telegram-SG
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/TelegramSG/TelegramSG.list
+    policy: SG-Server
+    disabled: false
+- rule_set:
+    name: Telegram-US
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/TelegramUS/TelegramUS.list
+    policy: US-Server
+    disabled: false
+- rule_set:
+    name: Telegram-NL
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/TelegramNL/TelegramNL.list
+    policy: US-Server
+    disabled: false
+- rule_set:
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Telegram/Telegram.list
+    policy: Telegram
+    disabled: false
+- rule_set:
+    match: https://github.com/Repcz/Tool/raw/X/Egern/Rules/TikTok.yaml
+    policy: TikTok
+    disabled: false
+- rule_set:
+    name: GitHub
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/GitHub/GitHub.list
+    policy: GitHub
+    disabled: false
+- rule_set:
+    name: Google
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Google/Google.list
+    policy: Google
+    disabled: false
+- rule_set:
+    name: Microsoft
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/Microsoft/Microsoft.list
+    policy: Microsoft
+    disabled: false
+- rule_set:
+    match: https://yfamilys.com/rule/ProxyMedia.list
+    policy: GlobalMedia
+    disabled: false
+- rule_set:
+    name: ChinaASN
+    match: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Surge/ChinaASN/ChinaASN.list
+    policy: DIRECT
+    disabled: false
+- geoip:
+    match: CN
+    policy: DIRECT
+    no_resolve: true
+    disabled: true
+- rule_set:
+    name: speedtest
+    match: https://rule.kelee.one/Loon/Speedtest.lsr
+    policy: Final
+    disabled: true
+- default:
+    policy: Final
+scriptings:
+- http_response:
+    name: 同程旅行获取 CooKie
+    match: ^https:\/\/app\.17u\.cn\/welfarecenter\/index\/signIndex
+    script_url: https://raw.githubusercontent.com/chavyleung/scripts/master/tongcheng-trip/tongcheng-trip.js
+    body_required: false
+    binary_body: false
+    disabled: false
+- schedule:
+    name: 同程旅行定时签到
+    cron: 5 12 * * *
+    script_url: https://raw.githubusercontent.com/chavyleung/scripts/master/tongcheng-trip/tongcheng-trip.js
+    disabled: false
+- generic:
+    name: 机场订阅小组件
+    script_url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/Sub_Widget.JS
+    timeout: 120
+- generic:
+    name: 节日倒计时小组件
+    script_url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/Holiday_Countdown.js
+- generic:
+    name: 油价查询小组件
+    script_url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/Oil_Widget.JS
+- generic:
+    name: 网络诊断雷达小组件
+    script_url: https://raw.githubusercontent.com/xcgtb/Egern-Widgets/main/Network-Pro.js
+- generic:
+    name: ip数据中心小组件
+    script_url: https://raw.githubusercontent.com/Lingyouy/Rules/refs/heads/main/Shujuzhongxin.js
+- generic:
+    name: '测试网络下载速度小组件 '
+    script_url: https://raw.githubusercontent.com/Lingyouy/Rules/refs/heads/main/cesu.js
+mitm:
+  ca_p12: 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
+  ca_passphrase: U7Q03680
+  hostnames:
+    includes:
+    - app.17u.cn
+widgets:
+- name: 测试网络下载速度
+  script_name: '测试网络下载速度小组件 '
+  env:
+    policy: 香港节点
+- name: 网络诊断雷达
+  script_name: 网络诊断雷达小组件
+- name: IP数据中心
+  script_name: ip数据中心小组件
+  env:
+    policy: 香港节点
+- name: 油价查询
+  script_name: 油价查询小组件
+  env:
+    region: henan/xinxiang
+- name: 节日倒计时
+  script_name: 节日倒计时小组件
+modules:
+- url: https://kelee.one/Tool/Loon/Lpx/Block_HTTPDNS.lpx
+  enabled: false
+- name: 广告平台拦截器
+  url: https://kelee.one/Tool/Loon/Lpx/BlockAdvertisers.lpx
+  enabled: true
+- url: https://raw.githubusercontent.com/VirgilClyne/GetSomeFries/main/plugin/DNS.plugin
+  enabled: true
+- url: https://raw.githubusercontent.com/xream/scripts/main/surge/modules/network-info/net-lsp-x.sgmodule
+  enabled: true
+- name: 屏蔽苹果证书验证
+  url: https://raw.githubusercontent.com/salem-2007/apple-cert-block/main/AntiRevoke.plugin
+  enabled: true
+- url: https://yfamilys.com/plugin/DisableUpdate.plugin
+  enabled: true
+- url: https://raw.githubusercontent.com/158212892/QuantumultXMark/refs/heads/main/My/Egern/modules/PingMe.yaml
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/555DY_remove_ads.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/RedPaper_remove_ads.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/QQMusic_remove_ads.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/Bilibili_remove_ads.lpx
+  compat_arguments:
+    displayUpList: show
+    purifyComment: 'true'
+    optimizeRequest: 'true'
+    sponsorBlock: 'true'
+    logLevel: off
+    PROXY: Direct
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/DragonRead_remove_ads.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/Cainiao_remove_ads.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/Weixin_external_links_unlock.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/QQ_Redirect.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/JD_Price.lpx
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/YouTubeSubtitlesTranslation.lpx
+  compat_arguments:
+    Type: Official
+    AutoCC: 'true'
+    ShowOnly: 'true'
+    Position: Forward
+  enabled: true
+- url: https://kelee.one/Tool/Loon/Lpx/AppleWeatherEnhancer.lpx
+  enabled: true
+- url: https://raw.githubusercontent.com/sub-store-org/Sub-Store/master/config/Egern.yaml
+  enabled: true
+- url: https://raw.githubusercontent.com/Script-Hub-Org/Script-Hub/refs/heads/main/modules/script-hub.beta.surge.sgmodule
+  enabled: true
+- url: https://raw.githubusercontent.com/chavyleung/scripts/master/box/rewrite/boxjs.rewrite.surge.sgmodule
+  enabled: true
+- url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/Telegram.yaml
+  env:
+    CLIENT: Turrit
+  enabled: true
+- url: https://raw.githubusercontent.com/IBL3ND/module/refs/heads/main/surge-loon-to-egern.yaml
+  enabled: true
+- url: https://ddgksf2013.top/module/ScriptHub.Egern.sgmodule
+  enabled: true
+- url: https://raw.githubusercontent.com/Yuheng0101/X/main/Scripts/GitRawAutoCDN/surge.sgmodule
+  enabled: true
+- url: https://reven.lovebabyforever.workers.dev/reven/iTunes.sgmodule
+  enabled: true
+- url: https://reven.jsforbaby.workers.dev/reven/reven.sgmodule
+  enabled: true
+- url: https://mock.forward1.workers.dev/forward.sgmodule
+  enabled: true
+- url: https://raw.githubusercontent.com/Yuheng0101/X/main/Scripts/RenRenZhuiJu/surge.sgmodule
+  enabled: true
+- url: http://script.hub/file/_start_/https://raw.githubusercontent.com/ZenmoFeiShi/Qx/refs/heads/main/mgtv_vip.snippet/_end_/mgtv_vip.sgmodule?type=qx-rewrite&target=surge-module&del=true&jqEnabled=true
+  enabled: true
+- url: http://script.hub/file/_start_/https://raw.githubusercontent.com/ZenmoFeiShi/Qx/refs/heads/main/migu_vip_share.snippet/_end_/migu_vip_share.sgmodule?type=qx-rewrite&target=surge-module&del=true&jqEnabled=true
+  enabled: true
+- url: https://raw.githubusercontent.com/Yu9191/Rewrite/refs/heads/main/lovekey.sgmodule
+  enabled: true
