@@ -30,7 +30,7 @@ export default async function(ctx) {
   }
 
   // =========================
-  // 辅助函数
+  // 辅助函数（省略重复部分，同之前完整版）
   // =========================
   async function safeGet(url, opts = {}) {
     try {
@@ -44,7 +44,6 @@ export default async function(ctx) {
     try { return JSON.parse(text); } catch { return null; }
   }
 
-  // 本地运营商格式化
   const fmtLocalISP = (isp) => {
     if (!isp) return "未知";
     const s = String(isp).toLowerCase();
@@ -55,7 +54,6 @@ export default async function(ctx) {
     return isp;
   };
 
-  // 代理ISP格式化
   const fmtProxyISP = (isp) => {
     if (!isp) return "未知";
     let s = String(isp);
@@ -71,7 +69,6 @@ export default async function(ctx) {
     return s.length > 12 ? s.substring(0, 12) + "..." : s;
   };
 
-  // 国旗生成
   const getFlag = (code) => {
     if (!code || code.toUpperCase() === 'TW') return '🇨🇳';
     if (code.toUpperCase() === 'XX' || code === 'OK') return '✅';
@@ -83,29 +80,24 @@ export default async function(ctx) {
   // =========================
   const d = ctx.device || {};
   const netInfo = (typeof $network !== 'undefined') ? $network : (ctx.network || {});
-  
-  // 网络类型判断
   let netType = "离线", netIcon = "wifi.slash";
   const isWifi = !!d.wifi?.ssid;
   if (isWifi) {
     netType = d.wifi.ssid;
     netIcon = "wifi";
   } else if (d.cellular?.radio) {
-    const radioMap = { "GPRS": "2G", "EDGE": "2.5G", "WCDMA": "3G", "LTE": "4G", "NR": "5G", "NRNSA": "5G" };
-    netType = radioMap[d.cellular.radio.toUpperCase().replace(/\s+/g, "")] || d.cellular.radio;
+    const radioMap = { "GPRS": "2G", "EDGE": "2.5G", "WCDMA": "3G", "LTE": "4G", "NR": "5G" };
+    netType = radioMap[d.cellular.radio.toUpperCase()] || d.cellular.radio;
     netIcon = "antenna.radiowaves.left.and.right";
   }
 
-  // 本地内网IP
   const localInnerIP = netInfo.v4?.primaryAddress || d.ipv4?.address || "N/A";
-
-  // 本地公网IP（强制直连）
   let localPublicIP = "N/A", localLocation = "未知位置", localISP = "未知运营商";
   try {
     const res = await ctx.http.get("https://myip.ipip.net/json", {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       timeout: 3000,
-      policy: 'DIRECT' // 强制直连
+      policy: 'DIRECT'
     });
     const data = parseJSON(await res.text());
     if (data?.data) {
@@ -121,7 +113,6 @@ export default async function(ctx) {
   // =========================
   let proxyIP = "N/A", proxyISP = "未知", proxyCountry = "XX";
   let isResidential = "未知属性", fraudScore = 0, riskLevel = "无数据", riskColor = C.sub;
-
   try {
     const res = await ctx.http.get("https://my.ippure.com/v1/info", withPolicy({ timeout: 4000 }));
     const data = parseJSON(await res.text());
@@ -129,28 +120,16 @@ export default async function(ctx) {
       proxyIP = data.ip || "N/A";
       proxyISP = fmtProxyISP(data.asOrganization || data.isp || "未知");
       proxyCountry = data.countryCode || "XX";
-      
-      // 原生/机房属性
-      isResidential = data.isResidential === true ? "🏠 原生住宅" : 
-                     data.isResidential === false ? "🏢 商业机房" : "未知属性";
-      
-      // IP纯净度（高危/中危/低危）
+      isResidential = data.isResidential === true ? "🏠 原生住宅" : data.isResidential === false ? "🏢 商业机房" : "未知属性";
       fraudScore = data.fraudScore || 0;
-      if (fraudScore >= 70) {
-        riskLevel = `高危 (${fraudScore})`;
-        riskColor = C.red;
-      } else if (fraudScore >= 30) {
-        riskLevel = `中危 (${fraudScore})`;
-        riskColor = C.orange;
-      } else {
-        riskLevel = `低危 (${fraudScore})`;
-        riskColor = C.green;
-      }
+      if (fraudScore >= 70) { riskLevel = `高危 (${fraudScore})`; riskColor = C.red; }
+      else if (fraudScore >= 30) { riskLevel = `中危 (${fraudScore})`; riskColor = C.orange; }
+      else { riskLevel = `低危 (${fraudScore})`; riskColor = C.green; }
     }
   } catch {}
 
   // =========================
-  // 解锁检测（全量，不小尺寸省略）
+  // 解锁检测（全量，中尺寸简化显示）
   // =========================
   async function checkUnlock(url, keyword) {
     try {
@@ -159,7 +138,6 @@ export default async function(ctx) {
     } catch { return "❌"; }
   }
 
-  // 流媒体解锁（全量）
   const [nf, dp, tk, yt] = await Promise.all([
     checkUnlock("https://www.netflix.com/title/81280792", "page-404"),
     checkUnlock("https://www.disneyplus.com", "unavailable"),
@@ -167,7 +145,6 @@ export default async function(ctx) {
     checkUnlock("https://www.youtube.com/premium", "not available")
   ]);
 
-  // AI解锁（全量）
   const [gpt, cl, gm] = await Promise.all([
     checkUnlock("https://chatgpt.com/cdn-cgi/trace", "loc="),
     checkUnlock("https://claude.ai/login", "App unavailable"),
@@ -178,7 +155,7 @@ export default async function(ctx) {
   const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
   // =========================
-  // 📱 小尺寸组件（核心信息不省略）
+  // 📱 小尺寸（极简，保留核心）
   // =========================
   if (widgetFamily === 'systemSmall') {
     return {
@@ -187,38 +164,20 @@ export default async function(ctx) {
       backgroundColor: C.card,
       cornerRadius: 12,
       children: [
-        // 网络类型
+        { type: 'text', text: `📍 ${localPublicIP}`, font: { size: 10 }, textColor: C.sub },
+        { type: 'spacer' },
+        { type: 'text', text: `🚀 ${proxyIP}`, font: { size: 10 }, textColor: C.purple },
+        { type: 'text', text: `${isResidential} | ${riskLevel}`, font: { size: 9 }, textColor: riskColor },
         {
           type: 'stack',
           direction: 'row',
-          alignItems: 'center',
+          justifyContent: 'center',
           gap: 6,
-          children: [
-            { type: 'image', src: `sf-symbol:${netIcon}`, color: C.accent, width: 14, height: 14 },
-            { type: 'text', text: netType, font: { size: 10, weight: 'medium' }, textColor: C.text, maxLines: 1 }
-          ]
-        },
-        { type: 'spacer', length: 8 },
-        
-        // 本地信息
-        { type: 'text', text: `📍 ${localLocation}`, font: { size: 9 }, textColor: C.sub, maxLines: 1 },
-        { type: 'text', text: `📶 ${localPublicIP}`, font: { size: 9 }, textColor: C.sub, maxLines: 1 },
-        
-        // 代理信息
-        { type: 'text', text: `🚀 ${proxyIP}`, font: { size: 9 }, textColor: C.purple, maxLines: 1 },
-        { type: 'text', text: `${isResidential} | ${riskLevel}`, font: { size: 9 }, textColor: riskColor, maxLines: 1 },
-        
-        // 解锁状态（全显示）
-        {
-          type: 'stack',
-          direction: 'row',
-          justifyContent: 'space-around',
-          marginTop: 6,
+          marginTop: 4,
           children: [
             { type: 'text', text: `NF ${nf}`, font: { size: 9 } },
             { type: 'text', text: `DP ${dp}`, font: { size: 9 } },
-            { type: 'text', text: `TK ${tk}`, font: { size: 9 } },
-            { type: 'text', text: `YT ${yt}`, font: { size: 9 } }
+            { type: 'text', text: `GPT ${gpt}`, font: { size: 9 } }
           ]
         }
       ]
@@ -226,7 +185,7 @@ export default async function(ctx) {
   }
 
   // =========================
-  // 📗 中尺寸组件（网络全显+解锁简化）
+  // 📗 中尺寸（左右布局 + 左右最下层解锁）
   // =========================
   if (widgetFamily === 'systemMedium') {
     return {
@@ -245,53 +204,89 @@ export default async function(ctx) {
             { type: 'image', src: 'sf-symbol:network', color: C.accent, width: 18, height: 18 },
             { type: 'text', text: '网络诊断', font: { size: 16, weight: 'bold' }, textColor: C.text },
             { type: 'spacer' },
-            { type: 'text', text: timeStr, font: { size: 10 }, textColor: C.sub }
+            { type: 'text', text: timeStr, font: { size: 11 }, textColor: C.sub }
           ]
         },
-        { type: 'spacer', length: 12 },
-        
-        // 本地网络（全显示）
-        {
-          type: 'stack',
-          direction: 'column',
-          gap: 6,
-          children: [
-            { type: 'text', text: '📶 本地网络', font: { size: 12, weight: 'semibold' }, textColor: C.accent },
-            { type: 'text', text: `类型：${netType}`, font: { size: 10 }, textColor: C.text },
-            { type: 'text', text: `内网IP：${localInnerIP}`, font: { size: 10 }, textColor: C.sub, maxLines: 1 },
-            { type: 'text', text: `公网IP：${localPublicIP}`, font: { size: 10 }, textColor: C.sub, maxLines: 1 },
-            { type: 'text', text: `位置：${localLocation}`, font: { size: 10 }, textColor: C.sub, maxLines: 1 },
-            { type: 'text', text: `运营商：${localISP}`, font: { size: 10 }, textColor: C.sub, maxLines: 1 }
-          ]
-        },
-        
-        { type: 'spacer', length: 12 },
-        
-        // 代理网络（全显示）
-        {
-          type: 'stack',
-          direction: 'column',
-          gap: 6,
-          children: [
-            { type: 'text', text: '🌐 代理网络', font: { size: 12, weight: 'semibold' }, textColor: C.purple },
-            { type: 'text', text: `出口IP：${proxyIP}`, font: { size: 10 }, textColor: C.text, maxLines: 1 },
-            { type: 'text', text: `ISP：${proxyISP}`, font: { size: 10 }, textColor: C.sub, maxLines: 1 },
-            { type: 'text', text: `属性：${isResidential}`, font: { size: 10 }, textColor: C.text },
-            { type: 'text', text: `纯净度：${riskLevel}`, font: { size: 10, weight: 'medium' }, textColor: riskColor }
-          ]
-        },
-        
-        { type: 'spacer', length: 12 },
-        
-        // 解锁状态（简化）
+        { type: 'spacer', length: 16 },
+
+        // 左右布局：本地网络 + 代理网络（各列最下层放解锁信息）
         {
           type: 'stack',
           direction: 'row',
-          justifyContent: 'space-around',
+          gap: 16,
+          flex: 1,
           children: [
-            { type: 'text', text: `NF ${nf}`, font: { size: 11, weight: 'medium' }, textColor: C.text },
-            { type: 'text', text: `DP ${dp}`, font: { size: 11, weight: 'medium' }, textColor: C.text },
-            { type: 'text', text: `GPT ${gpt}`, font: { size: 11, weight: 'medium' }, textColor: C.text }
+            // 左列：本地网络（全显示） + 影视解锁（最下层）
+            {
+              type: 'stack',
+              direction: 'column',
+              gap: 12,
+              flex: 1,
+              children: [
+                // 本地网络（全显示）
+                {
+                  type: 'stack',
+                  direction: 'column',
+                  gap: 6,
+                  children: [
+                    { type: 'text', text: '📶 本地网络', font: { size: 12, weight: 'semibold' }, textColor: C.accent },
+                    { type: 'text', text: `类型：${netType}`, font: { size: 11 }, textColor: C.text },
+                    { type: 'text', text: `内网IP：${localInnerIP}`, font: { size: 11 }, textColor: C.sub, maxLines: 1 },
+                    { type: 'text', text: `公网IP：${localPublicIP}`, font: { size: 11 }, textColor: C.sub, maxLines: 1 },
+                    { type: 'text', text: `位置：${localLocation}`, font: { size: 11 }, textColor: C.sub, maxLines: 1 },
+                    { type: 'text', text: `运营商：${localISP}`, font: { size: 11 }, textColor: C.sub, maxLines: 1 }
+                  ]
+                },
+                { type: 'spacer', flex: 1 }, // 推到最下层
+                // 影视解锁（简化）
+                {
+                  type: 'stack',
+                  direction: 'column',
+                  gap: 6,
+                  children: [
+                    { type: 'text', text: '🎬 影视解锁', font: { size: 12, weight: 'semibold' }, textColor: C.accent },
+                    { type: 'text', text: `NF ${nf}  DP ${dp}  TK ${tk}  YT ${yt}`, font: { size: 11 }, textColor: C.text }
+                  ]
+                }
+              ]
+            },
+
+            // 分隔线
+            { type: 'stack', width: 0.5, backgroundColor: C.sub },
+
+            // 右列：代理网络（全显示） + AI解锁（最下层）
+            {
+              type: 'stack',
+              direction: 'column',
+              gap: 12,
+              flex: 1,
+              children: [
+                // 代理网络（全显示）
+                {
+                  type: 'stack',
+                  direction: 'column',
+                  gap: 6,
+                  children: [
+                    { type: 'text', text: '🌐 代理网络', font: { size: 12, weight: 'semibold' }, textColor: C.purple },
+                    { type: 'text', text: `出口IP：${proxyIP}`, font: { size: 11 }, textColor: C.text, maxLines: 1 },
+                    { type: 'text', text: `ISP：${proxyISP}`, font: { size: 11 }, textColor: C.sub, maxLines: 1 },
+                    { type: 'text', text: `属性：${isResidential}`, font: { size: 11 }, textColor: C.text },
+                    { type: 'text', text: `纯净度：${riskLevel}`, font: { size: 11, weight: 'medium' }, textColor: riskColor }
+                  ]
+                },
+                { type: 'spacer', flex: 1 }, // 推到最下层
+                // AI解锁（简化）
+                {
+                  type: 'stack',
+                  direction: 'column',
+                  gap: 6,
+                  children: [
+                    { type: 'text', text: '🤖 AI解锁', font: { size: 12, weight: 'semibold' }, textColor: C.purple },
+                    { type: 'text', text: `GPT ${gpt}  CL ${cl}  GM ${gm}`, font: { size: 11 }, textColor: C.text }
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
@@ -299,7 +294,7 @@ export default async function(ctx) {
   }
 
   // =========================
-  // 📘 大尺寸组件（全部不简化）
+  // 📘 大尺寸（全显示，无省略）
   // =========================
   return {
     type: 'widget',
@@ -317,12 +312,12 @@ export default async function(ctx) {
           { type: 'image', src: 'sf-symbol:waveform.path.ecg', color: C.accent, width: 22, height: 22 },
           { type: 'text', text: '🛡️ 网络诊断雷达', font: { size: 18, weight: 'heavy' }, textColor: C.text },
           { type: 'spacer' },
-          { type: 'text', text: `策略：${policy || '自动分流'}`, font: { size: 10 }, textColor: C.sub },
-          { type: 'text', text: timeStr, font: { size: 10 }, textColor: C.sub }
+          { type: 'text', text: `策略：${policy || '自动分流'}`, font: { size: 11 }, textColor: C.sub },
+          { type: 'text', text: timeStr, font: { size: 11 }, textColor: C.sub }
         ]
       },
       { type: 'spacer', length: 20 },
-      
+
       // 主内容网格
       {
         type: 'stack',
@@ -337,40 +332,24 @@ export default async function(ctx) {
             gap: 16,
             flex: 1,
             children: [
-              // 本地网络（全显示）
-              {
-                type: 'stack',
-                direction: 'column',
-                gap: 8,
-                children: [
-                  { type: 'text', text: '📶 本地网络', font: { size: 14, weight: 'bold' }, textColor: C.accent },
-                  { type: 'text', text: `类型：${netType}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `内网IP：${localInnerIP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
-                  { type: 'text', text: `公网IP：${localPublicIP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
-                  { type: 'text', text: `位置：${localLocation}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
-                  { type: 'text', text: `运营商：${localISP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 }
-                ]
-              },
-              
-              // 影视解锁（全显示）
-              {
-                type: 'stack',
-                direction: 'column',
-                gap: 8,
-                children: [
-                  { type: 'text', text: '🎬 影视解锁', font: { size: 14, weight: 'bold' }, textColor: C.accent },
-                  { type: 'text', text: `Netflix：${nf} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `Disney+：${dp} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `TikTok：${tk} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `YouTube：${yt} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text }
-                ]
-              }
+              { type: 'text', text: '📶 本地网络', font: { size: 14, weight: 'bold' }, textColor: C.accent },
+              { type: 'text', text: `类型：${netType}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `内网IP：${localInnerIP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
+              { type: 'text', text: `公网IP：${localPublicIP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
+              { type: 'text', text: `位置：${localLocation}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
+              { type: 'text', text: `运营商：${localISP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
+              { type: 'spacer' },
+              { type: 'text', text: '🎬 影视解锁', font: { size: 14, weight: 'bold' }, textColor: C.accent },
+              { type: 'text', text: `Netflix：${nf} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `Disney+：${dp} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `TikTok：${tk} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `YouTube：${yt} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text }
             ]
           },
-          
+
           // 分隔线
           { type: 'stack', width: 1, backgroundColor: { light: '#E5E5EA', dark: '#48484A' } },
-          
+
           // 右列：代理网络 + AI解锁
           {
             type: 'stack',
@@ -378,33 +357,17 @@ export default async function(ctx) {
             gap: 16,
             flex: 1,
             children: [
-              // 代理网络（全显示）
-              {
-                type: 'stack',
-                direction: 'column',
-                gap: 8,
-                children: [
-                  { type: 'text', text: '🌐 代理网络', font: { size: 14, weight: 'bold' }, textColor: C.purple },
-                  { type: 'text', text: `出口IP：${proxyIP}`, font: { size: 12 }, textColor: C.text, maxLines: 1 },
-                  { type: 'text', text: `ISP：${proxyISP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
-                  { type: 'text', text: `属性：${isResidential}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `纯净度：${riskLevel}`, font: { size: 12, weight: 'medium' }, textColor: riskColor },
-                  { type: 'text', text: `风险分：${fraudScore}`, font: { size: 12 }, textColor: C.sub }
-                ]
-              },
-              
-              // AI解锁（全显示）
-              {
-                type: 'stack',
-                direction: 'column',
-                gap: 8,
-                children: [
-                  { type: 'text', text: '🤖 AI解锁', font: { size: 14, weight: 'bold' }, textColor: C.purple },
-                  { type: 'text', text: `ChatGPT：${gpt} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `Claude：${cl} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
-                  { type: 'text', text: `Gemini：${gm} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text }
-                ]
-              }
+              { type: 'text', text: '🌐 代理网络', font: { size: 14, weight: 'bold' }, textColor: C.purple },
+              { type: 'text', text: `出口IP：${proxyIP}`, font: { size: 12 }, textColor: C.text, maxLines: 1 },
+              { type: 'text', text: `ISP：${proxyISP}`, font: { size: 12 }, textColor: C.sub, maxLines: 1 },
+              { type: 'text', text: `属性：${isResidential}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `纯净度：${riskLevel}`, font: { size: 12, weight: 'medium' }, textColor: riskColor },
+              { type: 'text', text: `风险分：${fraudScore}`, font: { size: 12 }, textColor: C.sub },
+              { type: 'spacer' },
+              { type: 'text', text: '🤖 AI解锁', font: { size: 14, weight: 'bold' }, textColor: C.purple },
+              { type: 'text', text: `ChatGPT：${gpt} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `Claude：${cl} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text },
+              { type: 'text', text: `Gemini：${gm} ${getFlag(proxyCountry)}`, font: { size: 12 }, textColor: C.text }
             ]
           }
         ]
