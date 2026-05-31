@@ -1,9 +1,8 @@
 /**
- * 📌 Egern Widget: 🛡️ 全栈网络诊断雷达（大中小自适应版）
- * ✅ 完全复用你第一个脚本的中尺寸布局
- * ✅ 小尺寸：关键信息
- * ✅ 中尺寸：双列满载
- * ✅ 大尺寸：四列全展开
+ * 📌 Egern Widget: 🛡️ 全栈网络诊断雷达（中尺寸·信息满载版）
+ * ✅ IP 纯净度：完整显示风险评分
+ * ✅ 流媒体/AI：单行紧凑，✅/❌ 显示
+ * ✅ 完全复用你第一个脚本的双列布局
  */
 
 export default async function (ctx) {
@@ -27,8 +26,7 @@ export default async function (ctx) {
     green: { light: '#32D74B', dark: '#32D74B' },
     orange: { light: '#FF9500', dark: '#FF9F0A' },
     red: { light: '#FF3B30', dark: '#FF453A' },
-    blue: { light: '#007AFF', dark: '#0A84FF' },
-    purple: { light: '#AF52DE', dark: '#BF5AF2' }
+    blue: { light: '#007AFF', dark: '#0A84FF' }
   };
 
   const UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X)";
@@ -69,7 +67,7 @@ export default async function (ctx) {
   } catch {}
 
   let proxyIP = "获取失败", proxyLoc = "未知", proxyISP = "未知", proxyCC = "XX";
-  let isResidential = null, fraudScore = null, ipapiRisk = "未知";
+  let isResidential = null, fraudScore = null;
   
   try {
     const [ipApi, ipPure] = await Promise.all([
@@ -92,6 +90,7 @@ export default async function (ctx) {
   const nativeTxt = isResidential === true ? "原生住宅" :
                     isResidential === false ? "商业机房" : "未知属性";
 
+  // ✅ IP 纯净度：完整显示（参考第二个脚本）
   const riskTxt = fraudScore === null ? "无数据" :
                   fraudScore >= 70 ? `高危 (${fraudScore})` :
                   fraudScore >= 30 ? `中危 (${fraudScore})` :
@@ -100,12 +99,14 @@ export default async function (ctx) {
   const riskCol = fraudScore >= 70 ? C.red :
                   fraudScore >= 30 ? C.orange : C.green;
 
+  // ========================
   // 检测函数
+  // ========================
   const check = async (url) => {
     try {
       const r = await ctx.http.get(url, withPolicy({ timeout: 4000 }));
-      return r.status === 200 ? "OK" : "❌";
-    } catch { return "❌"; }
+      return r.status === 200;
+    } catch { return false; }
   };
 
   const [nf, yt, ds, tt, gpt, claude, gemini] = await Promise.all([
@@ -141,22 +142,93 @@ export default async function (ctx) {
     ]
   });
 
-  const UnlockBadge = (name, status, col) => ({
-    type: "stack", direction: "row", alignItems: "center", gap: 2,
-    children: [
-      { type: "text", text: name, font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: status, font: { size: 9, weight: "bold" }, textColor: col }
-    ]
+  // ✅ 紧凑型解锁状态（单行，✅/❌）
+  const CompactUnlock = (items) => ({
+    type: "stack", direction: "row", alignItems: "center", gap: 12,
+    children: items.map(item => ({
+      type: "stack", direction: "row", alignItems: "center", gap: 2,
+      children: [
+        { type: "text", text: item.icon, font: { size: 9 } },
+        { type: "text", text: item.status ? "✅" : "❌", font: { size: 9 } }
+      ]
+    }))
   });
 
   const now = new Date();
   const time = `${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
 
   // ========================
-  // 尺寸适配
+  // 中尺寸布局（你的要求）
+  // ========================
+  if (widgetFamily === 'systemMedium') {
+    return {
+      type: "widget",
+      padding: [10, 12],
+      backgroundColor: C.bg,
+      gap: 6,
+      children: [
+        // 标题
+        {
+          type: "stack", direction: "row", alignItems: "center", gap: 4,
+          children: [
+            { type: "text", text: `网络雷达 (${POLICY || "DIRECT"})`, font: { size: 13, weight: "heavy" }, textColor: C.title, flex: 1 },
+            { type: "text", text: time, font: { size: 10 }, textColor: C.sub }
+          ]
+        },
+
+        // 本地 / 出口 双列
+        {
+          type: "stack", direction: "row", gap: 12,
+          children: [
+            // 本地网络
+            {
+              type: "stack", direction: "column", gap: 2, flex: 1,
+              children: [
+                Row("本地 IP", localIP, C.blue),
+                Row("位置", localLoc),
+                Row("运营商", localISP),
+                Row("延迟", localDelay)
+              ]
+            },
+            // 出口网络
+            {
+              type: "stack", direction: "column", gap: 2, flex: 1,
+              children: [
+                Row("出口 IP", proxyIP, C.blue),
+                Row("落地", proxyLoc),
+                Row("厂商", proxyISP),
+                Row("属性", nativeTxt),
+                Row("风险", riskTxt, riskCol),  // ✅ 完整显示风险评分
+                Row("延迟", proxyDelay)
+              ]
+            }
+          ]
+        },
+
+        { type: "stack", height: 0.5, backgroundColor: C.bar },
+
+        // ✅ 流媒体解锁（单行紧凑）
+        CompactUnlock([
+          { icon: "📺", status: nf },
+          { icon: "▶️", status: yt },
+          { icon: "🏰", status: ds },
+          { icon: "🎵", status: tt }
+        ]),
+
+        // ✅ AI 解锁（单行紧凑）
+        CompactUnlock([
+          { icon: "🤖", status: gpt },
+          { icon: "🧠", status: claude },
+          { icon: "💎", status: gemini }
+        ])
+      ]
+    };
+  }
+
+  // ========================
+  // 其他尺寸（保持原有逻辑）
   // ========================
   if (widgetFamily === 'systemSmall') {
-    // 小尺寸：仅核心信息
     return {
       type: "widget",
       padding: 12,
@@ -172,171 +244,78 @@ export default async function (ctx) {
           ]
         },
         { type: "spacer", length: 8 },
-        Row("出口 IP", proxyIP, C.blue),
-        Row("位置", proxyLoc, C.text),
+        Row("出口", proxyIP, C.blue),
+        Row("位置", proxyLoc),
         Row("风险", riskTxt, riskCol),
         { type: "spacer", length: 6 },
-        {
-          type: "stack", direction: "row", justifyContent: "space-between",
-          children: [
-            UnlockBadge("NF", nf, nf === "OK" ? C.green : C.red),
-            UnlockBadge("YT", yt, yt === "OK" ? C.green : C.red),
-            UnlockBadge("GPT", gpt, gpt === "OK" ? C.green : C.red),
-            UnlockBadge("CL", claude, claude === "OK" ? C.green : C.red)
-          ]
-        }
+        CompactUnlock([
+          { icon: "NF", status: nf },
+          { icon: "YT", status: yt },
+          { icon: "GPT", status: gpt }
+        ])
       ]
     };
   }
 
-  if (widgetFamily === 'systemLarge') {
-    // 大尺寸：四列全展开
-    return {
-      type: "widget",
-      padding: 14,
-      backgroundColor: C.bg,
-      gap: 10,
-      children: [
-        // 标题
-        {
-          type: "stack", direction: "row", alignItems: "center", gap: 6,
-          children: [
-            { type: "image", src: "sf-symbol:waveform.path.ecg", color: C.title, width: 18, height: 18 },
-            { type: "text", text: `网络雷达 (${POLICY || "DIRECT"})`, font: { size: 16, weight: "heavy" }, textColor: C.title },
-            { type: "spacer" },
-            { type: "text", text: time, font: { size: 11 }, textColor: C.sub }
-          ]
-        },
-        
-        // 四列
-        {
-          type: "stack", direction: "row", gap: 12,
-          children: [
-            // 本地网络
-            {
-              type: "stack", direction: "column", gap: 4, flex: 1,
-              children: [
-                { type: "text", text: "📱 本地网络", font: { size: 11, weight: "semibold" }, textColor: C.blue },
-                Row("IP", localIP, C.blue),
-                Row("位置", localLoc),
-                Row("运营商", localISP),
-                Row("延迟", localDelay, C.green)
-              ]
-            },
-            
-            { type: "stack", width: 0.5, backgroundColor: C.bar },
-            
-            // 出口网络
-            {
-              type: "stack", direction: "column", gap: 4, flex: 1,
-              children: [
-                { type: "text", text: "🌐 出口网络", font: { size: 11, weight: "semibold" }, textColor: C.purple },
-                Row("IP", proxyIP, C.blue),
-                Row("位置", proxyLoc),
-                Row("厂商", proxyISP),
-                Row("延迟", proxyDelay, C.green)
-              ]
-            },
-            
-            { type: "stack", width: 0.5, backgroundColor: C.bar },
-            
-            // 属性与风险
-            {
-              type: "stack", direction: "column", gap: 4, flex: 1,
-              children: [
-                { type: "text", text: "🔍 属性分析", font: { size: 11, weight: "semibold" }, textColor: C.orange },
-                Row("类型", nativeTxt),
-                Row("风险", riskTxt, riskCol),
-                Row("纯净度", fraudScore !== null ? `${100 - fraudScore}%` : "未知", C.green),
-                { type: "spacer" }
-              ]
-            },
-            
-            { type: "stack", width: 0.5, backgroundColor: C.bar },
-            
-            // 解锁状态
-            {
-              type: "stack", direction: "column", gap: 4, flex: 1,
-              children: [
-                { type: "text", text: "🎯 解锁状态", font: { size: 11, weight: "semibold" }, textColor: C.green },
-                Row("Netflix", nf, nf === "OK" ? C.green : C.red),
-                Row("YouTube", yt, yt === "OK" ? C.green : C.red),
-                Row("Disney+", ds, ds === "OK" ? C.green : C.red),
-                Row("TikTok", tt, tt === "OK" ? C.green : C.red),
-                Row("ChatGPT", gpt, gpt === "OK" ? C.green : C.red),
-                Row("Claude", claude, claude === "OK" ? C.green : C.red),
-                Row("Gemini", gemini, gemini === "OK" ? C.green : C.red)
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-
-  // 默认：中尺寸（完全复用你第一个脚本的布局）
+  // 大尺寸
   return {
     type: "widget",
-    padding: [10, 12],
+    padding: 14,
     backgroundColor: C.bg,
-    gap: 6,
+    gap: 10,
     children: [
-      // 标题
       {
-        type: "stack", direction: "row", alignItems: "center", gap: 4,
+        type: "stack", direction: "row", alignItems: "center", gap: 6,
         children: [
-          { type: "text", text: `网络雷达 (${POLICY || "DIRECT"})`, font: { size: 13, weight: "heavy" }, textColor: C.title, flex: 1 },
-          { type: "text", text: time, font: { size: 10 }, textColor: C.sub }
+          { type: "image", src: "sf-symbol:waveform.path.ecg", color: C.title, width: 18, height: 18 },
+          { type: "text", text: `网络雷达 (${POLICY || "DIRECT"})`, font: { size: 16, weight: "heavy" }, textColor: C.title },
+          { type: "spacer" },
+          { type: "text", text: time, font: { size: 11 }, textColor: C.sub }
         ]
       },
-
-      // 本地 / 出口
       {
         type: "stack", direction: "row", gap: 12,
         children: [
+          // 本地网络
           {
-            type: "stack", direction: "column", gap: 2, flex: 1,
+            type: "stack", direction: "column", gap: 4, flex: 1,
             children: [
-              Row("本地 IP", localIP, C.blue),
+              { type: "text", text: "📱 本地网络", font: { size: 11, weight: "semibold" }, textColor: C.blue },
+              Row("IP", localIP, C.blue),
               Row("位置", localLoc),
               Row("运营商", localISP),
-              Row("延迟", localDelay)
+              Row("延迟", localDelay, C.green)
             ]
           },
+          { type: "stack", width: 0.5, backgroundColor: C.bar },
+          // 出口网络
           {
-            type: "stack", direction: "column", gap: 2, flex: 1,
+            type: "stack", direction: "column", gap: 4, flex: 1,
             children: [
-              Row("出口 IP", proxyIP, C.blue),
+              { type: "text", text: "🌐 出口网络", font: { size: 11, weight: "semibold" }, textColor: C.purple },
+              Row("IP", proxyIP, C.blue),
               Row("落地", proxyLoc),
               Row("厂商", proxyISP),
               Row("属性", nativeTxt),
               Row("风险", riskTxt, riskCol),
-              Row("延迟", proxyDelay)
+              Row("延迟", proxyDelay, C.green)
+            ]
+          },
+          { type: "stack", width: 0.5, backgroundColor: C.bar },
+          // 解锁状态
+          {
+            type: "stack", direction: "column", gap: 4, flex: 1,
+            children: [
+              { type: "text", text: "🎯 解锁状态", font: { size: 11, weight: "semibold" }, textColor: C.green },
+              Row("Netflix", nf ? "✅" : "❌", nf ? C.green : C.red),
+              Row("YouTube", yt ? "✅" : "❌", yt ? C.green : C.red),
+              Row("Disney+", ds ? "✅" : "❌", ds ? C.green : C.red),
+              Row("TikTok", tt ? "✅" : "❌", tt ? C.green : C.red),
+              Row("ChatGPT", gpt ? "✅" : "❌", gpt ? C.green : C.red),
+              Row("Claude", claude ? "✅" : "❌", claude ? C.green : C.red),
+              Row("Gemini", gemini ? "✅" : "❌", gemini ? C.green : C.red)
             ]
           }
-        ]
-      },
-
-      { type: "stack", height: 0.5, backgroundColor: C.bar },
-
-      // 流媒体
-      {
-        type: "stack", direction: "row", gap: 6,
-        children: [
-          Row("NF", nf, nf === "OK" ? C.green : C.red),
-          Row("YT", yt, yt === "OK" ? C.green : C.red),
-          Row("DS", ds, ds === "OK" ? C.green : C.red),
-          Row("TT", tt, tt === "OK" ? C.green : C.red)
-        ]
-      },
-
-      // AI
-      {
-        type: "stack", direction: "row", gap: 6,
-        children: [
-          Row("GPT", gpt, gpt === "OK" ? C.green : C.red),
-          Row("CL", claude, claude === "OK" ? C.green : C.red),
-          Row("GM", gemini, gemini === "OK" ? C.green : C.red)
         ]
       }
     ]
