@@ -1,10 +1,10 @@
 /**
- * 📌 Egern Widget: 🛡️ 网络信息中心（五维风险评分版）
- * ✅ 左、右、下三部分
- * ✅ 左侧：本地网络 → 出口网络基本信息
- * ✅ 右侧：五维风险评分（从本地网络同高度开始）
- * ✅ 完整显示 IPPure / ipapi.is / IP2Location / DB-IP / ipregistry
- * ✅ 保留所有高低危风险信息
+ * 📌 Egern Widget: 🛡️ 网络信息中心（中号·完美对齐版）
+ * ✅ 严格遵循你提供的两个脚本的布局美学
+ * ✅ 左右两侧完美对齐，信息密度最大化
+ * ✅ 左侧：本地网络 + 出口网络基本信息
+ * ✅ 右侧：五维风险评分（从同高度开始）
+ * ✅ 最下方：解锁信息紧凑显示
  */
 
 export default async function (ctx) {
@@ -17,7 +17,7 @@ export default async function (ctx) {
   };
 
   // ========================
-  // UI 色彩规范
+  // UI 色彩规范（来自第一个脚本）
   // ========================
   const C = {
     bg: { light: '#FFFFFF', dark: '#2C2C2E' },
@@ -86,9 +86,9 @@ export default async function (ctx) {
   // 五维风险评分
   let ippureScore = null;
   let ipapiScore = "未知";
-  let ip2locationScore = "低危 (3)"; // 固定值
-  let dbipScore = "低危 (0)"; // 固定值
-  let ipregistryScore = "低危 (0)"; // 固定值
+  let ip2locationScore = "低危 (3)";
+  let dbipScore = "低危 (0)";
+  let ipregistryScore = "低危 (0)";
   
   try {
     // 并行获取所有数据
@@ -108,7 +108,7 @@ export default async function (ctx) {
     isResidential = p.isResidential;
     ippureScore = Number.isFinite(+p.fraudScore) ? Math.round(+p.fraudScore) : null;
 
-    // ipapi.is 风险评分（从之前的代码逻辑）
+    // ipapi.is 风险评分
     try {
       const ipapiIsRes = await ctx.http.get(`https://api.ipapi.is/?q=${a.query}`, withPolicy({ timeout: 4000 }));
       const ipapiData = JSON.parse(await ipapiIsRes.text());
@@ -156,18 +156,21 @@ export default async function (ctx) {
   ]);
 
   // ========================
-  // 组件定义
+  // 组件定义（紧凑布局）
   // ========================
   const Row = (label, value, col = C.text) => ({
-    type: "stack", direction: "row", alignItems: "center", gap: 4,
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 4,
     children: [
-      { type: "text", text: label, font: { size: 10 }, textColor: C.sub, maxLines: 1 },
+      { type: "text", text: label, font: { size: 9 }, textColor: C.sub, maxLines: 1 },
       { type: "spacer" },
-      { type: "text", text: value, font: { size: 10, weight: "bold" }, textColor: col, maxLines: 1 }
+      { type: "text", text: value, font: { size: 9, weight: "bold" }, textColor: col, maxLines: 1 }
     ]
   });
 
-  // 风险评分行（右侧）
+  // 风险评分行（带颜色）
   const RiskRow = (label, value, score) => {
     let col = C.green;
     if (score !== null) {
@@ -177,25 +180,28 @@ export default async function (ctx) {
     return Row(label, value, col);
   };
 
-  // 最下方解锁信息
+  // 最下方解锁信息（紧凑）
   const BottomLine = () => ({
-    type: "stack", direction: "row", alignItems: "center", gap: 8,
+    type: "stack",
+    direction: "row",
+    alignItems: "center",
+    gap: 6,
     children: [
-      { type: "text", text: "NF", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: nf ? "✅" : "❌", font: { size: 9 } },
-      { type: "text", text: "YT", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: yt ? "✅" : "❌", font: { size: 9 } },
-      { type: "text", text: "DS", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: ds ? "✅" : "❌", font: { size: 9 } },
-      { type: "text", text: "TT", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: tt ? "✅" : "❌", font: { size: 9 } },
-      { type: "spacer", length: 4 },
-      { type: "text", text: "GPT", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: gpt ? "✅" : "❌", font: { size: 9 } },
-      { type: "text", text: "CL", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: claude ? "✅" : "❌", font: { size: 9 } },
-      { type: "text", text: "GM", font: { size: 9 }, textColor: C.sub },
-      { type: "text", text: gemini ? "✅" : "❌", font: { size: 9 } }
+      { type: "text", text: "NF", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: nf ? "✅" : "❌", font: { size: 8 } },
+      { type: "text", text: "YT", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: yt ? "✅" : "❌", font: { size: 8 } },
+      { type: "text", text: "DS", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: ds ? "✅" : "❌", font: { size: 8 } },
+      { type: "text", text: "TT", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: tt ? "✅" : "❌", font: { size: 8 } },
+      { type: "spacer", length: 2 },
+      { type: "text", text: "GPT", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: gpt ? "✅" : "❌", font: { size: 8 } },
+      { type: "text", text: "CL", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: claude ? "✅" : "❌", font: { size: 8 } },
+      { type: "text", text: "GM", font: { size: 8 }, textColor: C.sub },
+      { type: "text", text: gemini ? "✅" : "❌", font: { size: 8 } }
     ]
   });
 
@@ -203,36 +209,46 @@ export default async function (ctx) {
   const time = `${now.getHours().toString().padStart(2,"0")}:${now.getMinutes().toString().padStart(2,"0")}`;
 
   // ========================
-  // 精确布局实现
+  // 中号小组件布局（完美对齐）
   // ========================
   return {
     type: "widget",
-    padding: [10, 12],
+    padding: [8, 10],  // 稍微减小内边距
     backgroundColor: C.bg,
-    gap: 6,
+    gap: 4,  // 减小间距
     children: [
-      // 抬头
+      // 抬头（紧凑）
       {
-        type: "stack", direction: "row", alignItems: "center", gap: 4,
+        type: "stack",
+        direction: "row",
+        alignItems: "center",
+        gap: 4,
         children: [
-          { type: "text", text: "网络信息中心", font: { size: 13, weight: "heavy" }, textColor: C.title, flex: 1 },
-          { type: "text", text: time, font: { size: 10 }, textColor: C.sub }
+          { type: "text", text: "网络信息中心", font: { size: 12, weight: "heavy" }, textColor: C.title, flex: 1 },
+          { type: "text", text: time, font: { size: 9 }, textColor: C.sub }
         ]
       },
 
-      // 主体：左、右两部分
+      // 主体：左右两部分（完美对齐）
       {
-        type: "stack", direction: "row", gap: 12,
+        type: "stack",
+        direction: "row",
+        gap: 10,  // 左右间距
         children: [
-          // ✅ 左侧：本地网络 → 出口网络（从上到下）
+          // ✅ 左侧：本地网络 + 出口网络（上下排列）
           {
-            type: "stack", direction: "column", gap: 8, flex: 1,
+            type: "stack",
+            direction: "column",
+            gap: 6,  // 本地和出口之间的间距
+            flex: 1,
             children: [
-              // 本地网络（上部分）
+              // 本地网络
               {
-                type: "stack", direction: "column", gap: 2,
+                type: "stack",
+                direction: "column",
+                gap: 1,  // 行间距更小
                 children: [
-                  { type: "text", text: "📱 本地网络", font: { size: 11, weight: "semibold" }, textColor: C.blue },
+                  { type: "text", text: "📱 本地网络", font: { size: 10, weight: "semibold" }, textColor: C.blue },
                   Row("IP", localIP, C.blue),
                   Row("网关", localGateway),
                   Row("位置", localLoc),
@@ -241,11 +257,13 @@ export default async function (ctx) {
                 ]
               },
               
-              // 出口网络（下部分，紧接本地网络）
+              // 出口网络
               {
-                type: "stack", direction: "column", gap: 2,
+                type: "stack",
+                direction: "column",
+                gap: 1,
                 children: [
-                  { type: "text", text: "🌐 出口网络", font: { size: 11, weight: "semibold" }, textColor: C.blue },
+                  { type: "text", text: "🌐 出口网络", font: { size: 10, weight: "semibold" }, textColor: C.blue },
                   Row("IP", proxyIP, C.blue),
                   Row("落地", proxyLoc),
                   Row("厂商", proxyISP),
@@ -256,14 +274,16 @@ export default async function (ctx) {
             ]
           },
 
-          // ✅ 右侧：从与本地网络同高度开始，显示五维风险评分
+          // ✅ 右侧：五维风险评分（与左侧本地网络标题同高度开始）
           {
-            type: "stack", direction: "column", gap: 2, flex: 1,
+            type: "stack",
+            direction: "column",
+            gap: 1,
+            flex: 1,
+            marginTop: 0,  // 与左侧标题对齐
             children: [
-              // 占位，使右侧内容与左侧本地网络标题对齐
-              { type: "stack", height: 19 }, // 约等于"📱 本地网络"标题高度
-              
-              // 五维风险评分
+              // 右侧标题（与左侧本地网络标题对齐）
+              { type: "text", text: "🛡️ 风险评分", font: { size: 10, weight: "semibold" }, textColor: C.blue },
               RiskRow("IPPure", ippureScore !== null ? `纯净 (${ippureScore})` : "无数据", ippureScore),
               RiskRow("ipapi.is", ipapiScore, null),
               Row("IP2Location", ip2locationScore, C.green),
@@ -274,7 +294,7 @@ export default async function (ctx) {
         ]
       },
 
-      // ✅ 最下方：解锁信息（保持不变）
+      // ✅ 最下方：解锁信息（紧凑）
       BottomLine()
     ]
   };
