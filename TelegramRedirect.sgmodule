@@ -1,0 +1,13 @@
+#!name=Telegram 跳转
+#!desc=将 t.me 链接重定向到你选择的 Telegram 客户端。\n\n【使用方法】\n1. 在 Surge 中开启 MITM（设置 > MITM > 开启 HTTPS 解密），并根据提示安装并信任证书。\n2. 导入此模块并确保其状态为开启。\n3. 修改脚本（详见下方说明）以切换目标客户端。\n\n【切换客户端】\n编辑脚本文件开头部分的 targetClient 变量：\nhttps://github.com/lylywayr/egern/blob/main/surge-Telegram 跳转.js\n\n【支持的客户端】\nTelegram, Swiftgram, Turrit, iMe, Nicegram, Lingogram
+#!author=lylywayr
+#!icon=https://iili.io/KQX347S.png
+
+[Script]
+telegram-redirect = type=http-response, pattern=^https?://t\.me/.+, requires-body=0, script-url=https://raw.githubusercontent.com/lylywayr/egern/main/surge-Telegram%20跳转.js
+
+[URL Rewrite]
+^https?://t\.me/.+ $1 302
+
+[MITM]
+hostname = t.me
