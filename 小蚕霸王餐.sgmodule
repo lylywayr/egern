@@ -1,9 +1,9 @@
-#!name=小蚕霸王餐 自动签到
-#!desc=集成定时签到(Cron)与响应拦截，使用 argument 传递账号数据，无需额外环境变量。
+#!name=小蚕霸王餐 自动签到（内存优化版）
+#!desc=限制响应体大小为128KB，防止内存溢出；定时+拦截双模式
 
 [MITM]
 hostname = gw.xiaocantech.com
 
 [Script]
-小蚕霸王餐 = type=cron,argument=xcbwc_data,cronexp=0 8 * * *,wake-system=1,script-path=https://gist.githubusercontent.com/Sliverkiss/27c601d97a3f8960b212e5cac5b6c470/raw/xcbwc.js,script-update-interval=0
-小蚕霸王餐 = type=http-response,pattern=^https:\/\/gw\.xiaocantech\.com\/rpc,requires-body=1,max-size=0,binary-body-mode=1,script-path=https://gist.githubusercontent.com/Sliverkiss/27c601d97a3f8960b212e5cac5b6c470/raw/xcbwc.js,script-update-interval=0,argument=xcbwc_data
+小蚕霸王餐定时 = type=cron,argument=xcbwc_data,cronexp=0 8 * * *,wake-system=1,script-path=https://gist.githubusercontent.com/Sliverkiss/27c601d97a3f8960b212e5cac5b6c470/raw/xcbwc.js,script-update-interval=0
+小蚕霸王餐拦截 = type=http-response,pattern=^https:\/\/gw\.xiaocantech\.com\/rpc,requires-body=1,max-size=131072,binary-body-mode=1,script-path=https://gist.githubusercontent.com/Sliverkiss/27c601d97a3f8960b212e5cac5b6c470/raw/xcbwc.js,script-update-interval=0,argument=xcbwc_data
