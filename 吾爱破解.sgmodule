@@ -1,25 +1,14 @@
-# =========================================
-# 吾爱破解论坛 签到模块
-# =========================================
-# 功能说明：
-# 1. 自动获取 Cookie（访问首页时）
-# 2. 每日签到（每天上午 9 点）
-# =========================================
+#!name=吾爱破解签到
+#!desc=自动获取Cookie并每日签到，支持WUAI_COOKIE参数传递
+#!system=iOS
+#!requirement=CORE_VERSION>=20
 
 [MITM]
 hostname = %APPEND% www.52pojie.cn
 
 [Script]
-# Cookie 获取 - 访问首页时自动捕获
-吾爱破解-获取Cookie = type=http-request, pattern=^https:\/\/www\.52pojie\.cn\/home\.php\?, script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/52pojie.js
+# Cookie获取 - 访问首页时自动捕获
+吾爱破解-获取Cookie = type=http-request, pattern=^https:\/\/www\.52pojie\.cn\/home\.php\?, script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/52pojie.js, argument=WUAI_COOKIE
 
-# 每日签到 - 每天上午 9 点执行
-吾爱破解-签到 = type=cron, cronexp=0 9 * * *, wake-system=1, script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/52pojie.js, timeout=60
-
-[General]
-# 模块元信息
-module-description = 吾爱破解论坛自动签到模块
-module-name = 吾爱破解签到
-module-author = Yuheng0101
-module-version = 1.0
-module-system-required = Surge
+# 每日签到 - 每天上午9点执行
+吾爱破解-签到 = type=cron, cronexp=0 9 * * *, wake-system=1, script-path=https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/52pojie.js, timeout=60, argument=WUAI_COOKIE
