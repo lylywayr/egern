@@ -1,41 +1,47 @@
-#!name = PingMe
-#!desc = 获取Cookie与自动签到
-#!author = fmz200
-#!icon = https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png
-
-name: "PingMe"
-description: "获取Cookie与自动签到"
-author: "fmz200"
-icon: "https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/PingMe.png"
-
-env_schema:
-  COOKIE_BTN:
-    name: "获取Cookie"
-    description: "开启后，打开PingMe自动抓取登录参数"
-    default_value: "true"
-    options: ["true", "false"]
-  SIGN_BTN:
-    name: "签到"
-    description: "开启后，每天 8:30 / 20:30 自动签到"
-    default_value: "true"
-    options: ["true", "false"]
-
+name: PingMe 签到与 Cookie 获取
+description: PingMe 自动签到及 Cookie 获取模块。支持自定义签到时间及脚本响应等待时间。
+compat_arguments:
+  PingMeCookie: 'true'
+  PingMeCron: 30 8,20 * * *
+  FetchTimeout: '35'
+compat_arguments_schema:
+  PingMeCookie:
+    name: '[开关] PingMe 获取Cookie'
+    description: 成功获取 Cookie 后可以关闭此修改以节省资源
+    default_value: 'true'
+    options:
+    - 'true'
+    - 'false'
+  PingMeCron:
+    name: '[定时] PingMe 签到时间'
+    description: 可手动更改 PingMe 脚本运行时间
+    default_value: 30 8,20 * * *
+  FetchTimeout:
+    name: '[设置] 脚本响应超时(秒)'
+    description: 设置脚本等待时长，防止网络延迟导致的获取失败
+    default_value: '35'
+    options:
+    - '35'
+    - '45'
+    - '55'
+    - '60'
+author: fmz200
+homepage: https://github.com/fmz200/wool_scripts
+icon: https://raw.githubusercontent.com/fmz200/wool_scripts/main/icons/apps/PingMe.png
+dns: {}
 scriptings:
-  - http_request:
-      name: PingMe获取Cookie
-      match: ^https?:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
-      script_url: https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/PingMeCookie.js
-      timeout: 60
-      env:
-        ENABLE_COOKIE: "{{ .env.COOKIE_BTN }}"
-  - schedule:
-      name: PingMe签到
-      cron: "30 8,20 * * *"
-      script_url: https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/PineMeSign.js
-      timeout: 300
-      env:
-        ENABLE_SIGN: "{{ .env.SIGN_BTN }}"
-
+- schedule:
+    name: PingMe签到
+    cron: 30 8,20 * * *
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/PingMe/PingMeSignin.js
+    timeout: 60
+- http_request:
+    name: PingMe获取Cookie
+    match: ^https:\/\/api\.pingmeapp\.net\/app\/queryBalanceAndBonus
+    script_url: https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/cookie/get_cookie.js
+    body_required: false
+    timeout: 60
 mitm:
   hostnames:
+    includes:
     - api.pingmeapp.net
