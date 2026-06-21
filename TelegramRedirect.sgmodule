@@ -7,7 +7,7 @@
 #!arguments-desc=- 客户端: 填写 Telegram 客户端的 URL Scheme 名称（大小写不敏感）\n\n常见客户端：Telegram, Swiftgram, Turrit, iMe, Nicegram, Lingogram
 
 [Script]
-http-request ^https?://t\.me/.+ script-path=https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/surge-Telegram%20跳转.js, requires-body=true, timeout=10, argument={{{客户端}}}
+http-request ^https?://t\.me/.+ script-path=https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/surge-Telegram跳转.js, requires-body=true, timeout=10, argument={{{客户端}}}
 
 [MITM]
 hostname = t.me
