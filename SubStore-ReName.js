@@ -3,8 +3,8 @@
  * 脚本名称：Sub-Store 节点重命名脚本 (SubStore-ReName.js)
  * 功能说明：对代理节点进行智能重命名、地区识别、关键词保留、过滤和排序。
  * 适用平台：Sub-Store (https://sub-store.app/)
- * 更新日期：2026-06-22
- * 版本：2.6 (新增 pcgn 参数排除中国大陆节点)
+ * 更新日期：2026-06-23
+ * 版本：2.8 (前缀与后续用 - 连接，其余部分由 fgf 控制)
  * 作者：lylywayr
  * 
  * ============================================================================
@@ -21,12 +21,11 @@
  * 1. 地区识别与输出格式
  *   in=zh|en|quan|flag       输入识别方式（zh/cn：中文，en/us：英文缩写，quan：英文全称，flag/gq：国旗），默认自动判断
  *   out=zh|en|quan|flag      输出格式（默认同 in 或 zh）
- *   fgf=分隔符               前缀/国旗与名称间的分隔符（默认空格，需 URL 编码，如 %20）
- *   sn=分隔符                地区名与序号间的分隔符（默认空格）
+ *   fgf=分隔符               除前缀和编号外，其他部分之间的分隔符（默认空格，需 URL 编码）
+ *   sn=分隔符                地区名与序号之间的分隔符（默认空格）
  * 
  * 2. 前缀与排序
- *   name=机场名称            添加机场前缀
- *   nf=1                     将前缀放在最前面（默认放在地区名之后）
+ *   name=机场名称            添加机场前缀（固定放在最前，与后续用 - 连接）
  *   one=1                    移除只有一个节点时的 "01" 序号
  * 
  * 3. 关键词保留与替换
@@ -36,6 +35,7 @@
  *   bl=1                     提取并保留倍率标识（如 x2、3×），显示为 “数字×”
  *   blbz=1                   提取并保留倍率标识，显示为 “数字倍率”（如 2倍率）
  *                             ★ bl 与 blbz 互不依赖，可单独使用；若同时启用，blbz 覆盖 bl 的格式
+ *   blcs=1                   提取测速信息，显示为 “数字Mbps”（如 89.10Mbps）
  *   blnx=1                   只保留高倍率（>1x）节点，删除 1x 或无倍率节点
  *   nx=1                     保留 1x 或无倍率节点（与 bl 配合使用）
  *   blpx=1                   对保留的倍率标识进行分组排序（特殊标识优先）
@@ -59,11 +59,11 @@
  *   # 提取倍率，标准化为“倍率”，保留 IPLC 和 GPT 关键词，清理乱名，排除国内节点
  *   https://.../SubStore-ReName.js#name=我的机场&blbz=1&blkey=IPLC+GPT&clear=1&pcgn=1
  * 
- *   # 只保留高倍率节点，输出英文缩写，自定义分隔符
- *   https://.../SubStore-ReName.js#blnx=1&out=en&fgf=-&sn=_
+ *   # 保留测速，前缀用 -，其余用空格，编号用空格（默认）
+ *   https://.../SubStore-ReName.js#name=机场&blcs=1&bl=1
  * 
- *   # 同时启用 bl 和 blbz（blbz 生效）
- *   https://.../SubStore-ReName.js#bl=1&blbz=1
+ *   # 所有部分用 - 连接（前缀 -，内部 -，编号 -）
+ *   https://.../SubStore-ReName.js#name=机场&blcs=1&bl=1&fgf=-&sn=-
  * ============================================================================
  */
 
@@ -77,7 +77,8 @@ const parseBool = (val) => val === true || val === '1' || val === 1 || val === '
 const nx = parseBool(inArg.nx);
 const bl = parseBool(inArg.bl);
 const blbz = parseBool(inArg.blbz);
-const nf = parseBool(inArg.nf);
+const blcs = parseBool(inArg.blcs);
+const nf = parseBool(inArg.nf);   // 保留但不再使用，前缀始终放最前用 - 连接
 const key = parseBool(inArg.key);
 const blgd = parseBool(inArg.blgd);
 const blpx = parseBool(inArg.blpx);
@@ -87,7 +88,7 @@ const debug = parseBool(inArg.debug);
 const clear = parseBool(inArg.clear);
 const addflag = parseBool(inArg.flag);
 const nm = parseBool(inArg.nm);
-const pcgn = parseBool(inArg.pcgn);  // 新增：排除中国大陆节点
+const pcgn = parseBool(inArg.pcgn);
 
 const FGF = inArg.fgf == undefined ? " " : decodeURI(inArg.fgf);
 const XHFGF = inArg.sn == undefined ? " " : decodeURI(inArg.sn);
@@ -99,31 +100,24 @@ const nameMap = { cn: "cn", zh: "cn", us: "us", en: "us", quan: "quan", gq: "gq"
 const inname = nameMap[inArg.in] || "";
 const outputName = nameMap[inArg.out] || "";
 
-// ========== 地区数据（国旗、英文缩写、中文、英文全称） ==========
-// 这些数据用于地区识别和输出，顺序必须一一对应
-// 为了节省篇幅，此处仅保留占位，实际使用时请放入完整数组（下方已包含完整数据）
-
-// 以下为完整数据（省略的数组内容请从之前的脚本复制，确保完整）
-// 由于篇幅限制，这里只给出示意，实际脚本中需包含完整的 FG, EN, ZH, QC 数组。
-// 为了确保完整性，您可以从之前的回答中复制这些数组，或使用下面完整版本。
-
 // ==========================================================================
-// 下面开始正式的数据定义（完整版）
+// 1. 定义国家/地区映射数据（国旗、英文缩写、中文、英文全称）
+//    所有列表顺序必须一一对应
 // ==========================================================================
 
-// 国旗列表
+// 国旗列表（Emoji）
 // prettier-ignore
 const FG = ['🇭🇰','🇲🇴','🇹🇼','🇯🇵','🇰🇷','🇸🇬','🇺🇸','🇬🇧','🇫🇷','🇩🇪','🇦🇺','🇦🇪','🇦🇫','🇦🇱','🇩🇿','🇦🇴','🇦🇷','🇦🇲','🇦🇹','🇦🇿','🇧🇭','🇧🇩','🇧🇾','🇧🇪','🇧🇿','🇧🇯','🇧🇹','🇧🇴','🇧🇦','🇧🇼','🇧🇷','🇻🇬','🇧🇳','🇧🇬','🇧🇫','🇧🇮','🇰🇭','🇨🇲','🇨🇦','🇨🇻','🇰🇾','🇨🇫','🇹🇩','🇨🇱','🇨🇴','🇰🇲','🇨🇬','🇨🇩','🇨🇷','🇭🇷','🇨🇾','🇨🇿','🇩🇰','🇩🇯','🇩🇴','🇪🇨','🇪🇬','🇸🇻','🇬🇶','🇪🇷','🇪🇪','🇪🇹','🇫🇯','🇫🇮','🇬🇦','🇬🇲','🇬🇪','🇬🇭','🇬🇷','🇬🇱','🇬🇹','🇬🇳','🇬🇾','🇭🇹','🇭🇳','🇭🇺','🇮🇸','🇮🇳','🇮🇩','🇮🇷','🇮🇶','🇮🇪','🇮🇲','🇮🇱','🇮🇹','🇨🇮','🇯🇲','🇯🇴','🇰🇿','🇰🇪','🇰🇼','🇰🇬','🇱🇦','🇱🇻','🇱🇧','🇱🇸','🇱🇷','🇱🇾','🇱🇹','🇱🇺','🇲🇰','🇲🇬','🇲🇼','🇲🇾','🇲🇻','🇲🇱','🇲🇹','🇲🇷','🇲🇺','🇲🇽','🇲🇩','🇲🇨','🇲🇳','🇲🇪','🇲🇦','🇲🇿','🇲🇲','🇳🇦','🇳🇵','🇳🇱','🇳🇿','🇳🇮','🇳🇪','🇳🇬','🇰🇵','🇳🇴','🇴🇲','🇵🇰','🇵🇦','🇵🇾','🇵🇪','🇵🇭','🇵🇹','🇵🇷','🇶🇦','🇷🇴','🇷🇺','🇷🇼','🇸🇲','🇸🇦','🇸🇳','🇷🇸','🇸🇱','🇸🇰','🇸🇮','🇸🇴','🇿🇦','🇪🇸','🇱🇰','🇸🇩','🇸🇷','🇸🇿','🇸🇪','🇨🇭','🇸🇾','🇹🇯','🇹🇿','🇹🇭','🇹🇬','🇹🇴','🇹🇹','🇹🇳','🇹🇷','🇹🇲','🇻🇮','🇺🇬','🇺🇦','🇺🇾','🇺🇿','🇻🇪','🇻🇳','🇾🇪','🇿🇲','🇿🇼','🇦🇩','🇷🇪','🇵🇱','🇬🇺','🇻🇦','🇱🇮','🇨🇼','🇸🇨','🇦🇶','🇬🇮','🇨🇺','🇫🇴','🇦🇽','🇧🇲','🇹🇱'];
 
-// 英文缩写
+// 英文缩写列表（两位字母）
 // prettier-ignore
 const EN = ['HK','MO','TW','JP','KR','SG','US','GB','FR','DE','AU','AE','AF','AL','DZ','AO','AR','AM','AT','AZ','BH','BD','BY','BE','BZ','BJ','BT','BO','BA','BW','BR','VG','BN','BG','BF','BI','KH','CM','CA','CV','KY','CF','TD','CL','CO','KM','CG','CD','CR','HR','CY','CZ','DK','DJ','DO','EC','EG','SV','GQ','ER','EE','ET','FJ','FI','GA','GM','GE','GH','GR','GL','GT','GN','GY','HT','HN','HU','IS','IN','ID','IR','IQ','IE','IM','IL','IT','CI','JM','JO','KZ','KE','KW','KG','LA','LV','LB','LS','LR','LY','LT','LU','MK','MG','MW','MY','MV','ML','MT','MR','MU','MX','MD','MC','MN','ME','MA','MZ','MM','NA','NP','NL','NZ','NI','NE','NG','KP','NO','OM','PK','PA','PY','PE','PH','PT','PR','QA','RO','RU','RW','SM','SA','SN','RS','SL','SK','SI','SO','ZA','ES','LK','SD','SR','SZ','SE','CH','SY','TJ','TZ','TH','TG','TO','TT','TN','TR','TM','VI','UG','UA','UY','UZ','VE','VN','YE','ZM','ZW','AD','RE','PL','GU','VA','LI','CW','SC','AQ','GI','CU','FO','AX','BM','TL'];
 
-// 中文名称
+// 中文名称列表
 // prettier-ignore
 const ZH = ['香港','澳门','台湾','日本','韩国','新加坡','美国','英国','法国','德国','澳大利亚','阿联酋','阿富汗','阿尔巴尼亚','阿尔及利亚','安哥拉','阿根廷','亚美尼亚','奥地利','阿塞拜疆','巴林','孟加拉国','白俄罗斯','比利时','伯利兹','贝宁','不丹','玻利维亚','波斯尼亚和黑塞哥维那','博茨瓦纳','巴西','英属维京群岛','文莱','保加利亚','布基纳法索','布隆迪','柬埔寨','喀麦隆','加拿大','佛得角','开曼群岛','中非共和国','乍得','智利','哥伦比亚','科摩罗','刚果(布)','刚果(金)','哥斯达黎加','克罗地亚','塞浦路斯','捷克','丹麦','吉布提','多米尼加共和国','厄瓜多尔','埃及','萨尔瓦多','赤道几内亚','厄立特里亚','爱沙尼亚','埃塞俄比亚','斐济','芬兰','加蓬','冈比亚','格鲁吉亚','加纳','希腊','格陵兰','危地马拉','几内亚','圭亚那','海地','洪都拉斯','匈牙利','冰岛','印度','印尼','伊朗','伊拉克','爱尔兰','马恩岛','以色列','意大利','科特迪瓦','牙买加','约旦','哈萨克斯坦','肯尼亚','科威特','吉尔吉斯斯坦','老挝','拉脱维亚','黎巴嫩','莱索托','利比里亚','利比亚','立陶宛','卢森堡','马其顿','马达加斯加','马拉维','马来','马尔代夫','马里','马耳他','毛利塔尼亚','毛里求斯','墨西哥','摩尔多瓦','摩纳哥','蒙古','黑山共和国','摩洛哥','莫桑比克','缅甸','纳米比亚','尼泊尔','荷兰','新西兰','尼加拉瓜','尼日尔','尼日利亚','朝鲜','挪威','阿曼','巴基斯坦','巴拿马','巴拉圭','秘鲁','菲律宾','葡萄牙','波多黎各','卡塔尔','罗马尼亚','俄罗斯','卢旺达','圣马力诺','沙特阿拉伯','塞内加尔','塞尔维亚','塞拉利昂','斯洛伐克','斯洛文尼亚','索马里','南非','西班牙','斯里兰卡','苏丹','苏里南','斯威士兰','瑞典','瑞士','叙利亚','塔吉克斯坦','坦桑尼亚','泰国','多哥','汤加','特立尼达和多巴哥','突尼斯','土耳其','土库曼斯坦','美属维尔京群岛','乌干达','乌克兰','乌拉圭','乌兹别克斯坦','委内瑞拉','越南','也门','赞比亚','津巴布韦','安道尔','留尼汪','波兰','关岛','梵蒂冈','列支敦士登','库拉索','塞舌尔','南极','直布罗陀','古巴','法罗群岛','奥兰群岛','百慕达','东帝汶'];
 
-// 英文全称
+// 英文全称列表
 // prettier-ignore
 const QC = ['Hong Kong','Macao','Taiwan','Japan','Korea','Singapore','United States','United Kingdom','France','Germany','Australia','Dubai','Afghanistan','Albania','Algeria','Angola','Argentina','Armenia','Austria','Azerbaijan','Bahrain','Bangladesh','Belarus','Belgium','Belize','Benin','Bhutan','Bolivia','Bosnia and Herzegovina','Botswana','Brazil','British Virgin Islands','Brunei','Bulgaria','Burkina-faso','Burundi','Cambodia','Cameroon','Canada','CapeVerde','CaymanIslands','Central African Republic','Chad','Chile','Colombia','Comoros','Congo-Brazzaville','Congo-Kinshasa','CostaRica','Croatia','Cyprus','Czech Republic','Denmark','Djibouti','Dominican Republic','Ecuador','Egypt','EISalvador','Equatorial Guinea','Eritrea','Estonia','Ethiopia','Fiji','Finland','Gabon','Gambia','Georgia','Ghana','Greece','Greenland','Guatemala','Guinea','Guyana','Haiti','Honduras','Hungary','Iceland','India','Indonesia','Iran','Iraq','Ireland','Isle of Man','Israel','Italy','Ivory Coast','Jamaica','Jordan','Kazakstan','Kenya','Kuwait','Kyrgyzstan','Laos','Latvia','Lebanon','Lesotho','Liberia','Libya','Lithuania','Luxembourg','Macedonia','Madagascar','Malawi','Malaysia','Maldives','Mali','Malta','Mauritania','Mauritius','Mexico','Moldova','Monaco','Mongolia','Montenegro','Morocco','Mozambique','Myanmar(Burma)','Namibia','Nepal','Netherlands','New Zealand','Nicaragua','Niger','Nigeria','NorthKorea','Norway','Oman','Pakistan','Panama','Paraguay','Peru','Philippines','Portugal','PuertoRico','Qatar','Romania','Russia','Rwanda','SanMarino','SaudiArabia','Senegal','Serbia','SierraLeone','Slovakia','Slovenia','Somalia','SouthAfrica','Spain','SriLanka','Sudan','Suriname','Swaziland','Sweden','Switzerland','Syria','Tajikstan','Tanzania','Thailand','Togo','Tonga','TrinidadandTobago','Tunisia','Turkey','Turkmenistan','U.S.Virgin Islands','Uganda','Ukraine','Uruguay','Uzbekistan','Venezuela','Vietnam','Yemen','Zambia','Zimbabwe','Andorra','Reunion','Poland','Guam','Vatican','Liechtensteins','Curacao','Seychelles','Antarctica','Gibraltar','Cuba','Faroe Islands','Ahvenanmaa','Bermuda','Timor-Leste'];
 
@@ -131,30 +125,34 @@ const QC = ['Hong Kong','Macao','Taiwan','Japan','Korea','Singapore','United Sta
 // 2. 定义用于保留或过滤的正则表达式
 // ==========================================================================
 
-// specialRegex 用于 blpx 排序
+// specialRegex 用于 blpx 排序，判断节点名是否包含特殊标识（倍率或关键词）
 const specialRegex = [
   /(\d\.)?\d+×/,
   /IPLC|IEPL|Kern|Edge|Pro|Std|Exp|Biz|Fam|Game|Buy|Zx|LB|Game/,
 ];
 
-// nameclear：用于 clear 参数，清理乱名
+// nameclear：用于 clear 参数，匹配节点名中的乱名关键词，命中则删除该节点
 const nameclear =
   /(套餐|到期|有效|剩余|版本|已用|过期|失联|测试|官方|网址|备用|群|TEST|客服|网站|获取|订阅|流量|机场|下次|官址|联系|邮箱|工单|学术|USE|USED|TOTAL|EXPIRE|EMAIL|官网|回国)/i;
 
-// regexArray 和 valueArray 用于 blgd
+// regexArray 和 valueArray 用于 blgd 参数（保留固定格式标识），顺序一一对应
 // prettier-ignore
 const regexArray=[/ˣ²/, /ˣ³/, /ˣ⁴/, /ˣ⁵/, /ˣ⁶/, /ˣ⁷/, /ˣ⁸/, /ˣ⁹/, /ˣ¹⁰/, /ˣ²⁰/, /ˣ³⁰/, /ˣ⁴⁰/, /ˣ⁵⁰/, /IPLC/i, /IEPL/i, /核心/, /边缘/, /高级/, /标准/, /实验/, /商宽/, /家宽/, /游戏|game/i, /购物/, /专线/, /LB/, /cloudflare/i, /\budp\b/i, /\bgpt\b/i,/udpn\b/];
 // prettier-ignore
 const valueArray= [ "2×","3×","4×","5×","6×","7×","8×","9×","10×","20×","30×","40×","50×","IPLC","IEPL","Kern","Edge","Pro","Std","Exp","Biz","Fam","Game","Buy","Zx","LB","CF","UDP","GPT","UDPN"];
 
+// nameblnx 和 namenx 用于 blnx 和 nx 过滤
 const nameblnx = /(高倍|(?!1)2+(x|倍)|ˣ²|ˣ³|ˣ⁴|ˣ⁵|ˣ¹⁰)/i;
 const namenx = /(高倍|(?!1)(0\.|\d)+(x|倍)|ˣ²|ˣ³|ˣ⁴|ˣ⁵|ˣ¹⁰)/i;
+
+// keya 和 keyb 用于 key 参数的额外过滤
 const keya =
   /港|Hong|HK|新加坡|SG|Singapore|日本|Japan|JP|美国|United States|US|韩|土耳其|TR|Turkey|Korea|KR|🇸🇬|🇭🇰|🇯🇵|🇺🇸|🇰🇷|🇹🇷/i;
 const keyb =
   /(((1|2|3|4)\d)|(香港|Hong|HK) 0[5-9]|((新加坡|SG|Singapore|日本|Japan|JP|美国|United States|US|韩|土耳其|TR|Turkey|Korea|KR) 0[3-9]))/i;
 
-// 预替换映射表（扩充版）
+// rurekey：预替换映射表，在地区匹配前将一些常见别名统一为标准名称
+// 键为标准名称，值为匹配原节点名的正则（不区分大小写）
 const rurekey = {
   // ----- 美洲 -----
   "美国": /美西|美东|洛杉矶|圣何塞|硅谷|俄勒冈|西雅图|达拉斯|亚特兰大|迈阿密|纽约|芝加哥|凤凰城|丹佛|拉斯维加斯|休斯顿|华盛顿|旧金山|USA|America|United States|波特兰|哥伦布/gi,
@@ -269,7 +267,9 @@ const rurekey = {
 // ==========================================================================
 
 /**
- * 根据参数获取对应的地区列表
+ * 根据参数获取对应的地区列表（中文、英文缩写、国旗、英文全称）
+ * @param {string} arg - 类型标识（'us'、'gq'、'quan'，默认返回中文列表）
+ * @returns {Array} 对应的地区名称数组
  */
 // prettier-ignore
 function getList(arg) {
@@ -282,7 +282,9 @@ function getList(arg) {
 }
 
 /**
- * 对节点进行分组编号
+ * 对节点进行分组并添加序号（按当前 name 分组，添加两位数字序号）
+ * @param {Array} e - 节点数组（会直接修改）
+ * @returns {Array} 修改后的节点数组
  */
 // prettier-ignore
 function jxh(e) {
@@ -305,7 +307,9 @@ function jxh(e) {
 }
 
 /**
- * 移除单节点序号
+ * 移除单节点时的 "01" 序号（配合 one 参数）
+ * @param {Array} e - 节点数组（会直接修改）
+ * @returns {Array} 修改后的节点数组
  */
 // prettier-ignore
 function oneP(e) {
@@ -324,7 +328,9 @@ function oneP(e) {
 }
 
 /**
- * 对保留标识排序
+ * 对保留的标识进行分组排序（含特殊标识的节点排前面）
+ * @param {Array} pro - 节点数组
+ * @returns {Array} 排序后的节点数组
  */
 // prettier-ignore
 function fampx(pro) {
@@ -346,7 +352,7 @@ function fampx(pro) {
   return wnout.concat(wis);
 }
 
-// 缓存映射表
+// 缓存地区映射表（提高性能）
 let GetK = false, AMK = [];
 function ObjKA(i) {
   GetK = true;
@@ -357,14 +363,13 @@ function ObjKA(i) {
 // 4. 主函数 operator
 // ==========================================================================
 function operator(pro) {
-  // ---------- 新增：排除中国大陆节点（pcgn 参数） ----------
+  // ---------- 4a. 排除中国大陆节点（pcgn 参数） ----------
   if (pcgn) {
-    // 匹配中国大陆主要城市名、国家名关键词，不包含港澳台
-    const chinaRegex = /(?:^|\s)(北京|上海|广州|深圳|杭州|成都|武汉|南京|重庆|天津|苏州|郑州|长沙|西安|东莞|青岛|沈阳|宁波|昆明|大连|厦门|合肥|佛山|福州|哈尔滨|济南|长春|温州|石家庄|贵阳|常州|徐州|嘉兴|金华|南宁|泉州|呼和浩特|太原|乌鲁木齐|兰州|银川|海口|拉萨|西宁|南昌|郑州|中国|国内|CN|China)(?=\s|$)/i;
+    const chinaRegex = /(?:^|\s)(北京|上海|广州|深圳|杭州|成都|武汉|南京|重庆|天津|苏州|郑州|长沙|西安|东莞|青岛|沈阳|宁波|昆明|大连|厦门|合肥|佛山|福州|哈尔滨|济南|长春|温州|石家庄|贵阳|常州|徐州|嘉兴|金华|南宁|泉州|呼和浩特|太原|乌鲁木齐|兰州|银川|海口|拉萨|西宁|南昌|中国|国内|CN|China)(?=\s|$)/i;
     pro = pro.filter(p => !chinaRegex.test(p.name));
   }
 
-  // ---------- 构建地区映射表 ----------
+  // ---------- 4b. 构建地区映射表 ----------
   const Allmap = {};
   const outList = getList(outputName);
   let inputList, retainKey = "";
@@ -380,7 +385,7 @@ function operator(pro) {
     });
   });
 
-  // ---------- 执行过滤（clear, nx, blnx, key） ----------
+  // ---------- 4c. 执行过滤（clear, nx, blnx, key） ----------
   if (clear || nx || blnx || key) {
     pro = pro.filter((res) => {
       const resname = res.name;
@@ -395,10 +400,11 @@ function operator(pro) {
 
   const BLKEYS = BLKEY ? BLKEY.split("+") : "";
 
+  // ---------- 4d. 遍历每个节点进行重命名 ----------
   pro.forEach((e) => {
     let bktf = false, ens = e.name;
 
-    // 预替换
+    // ---------- 预替换（将常见别名统一） ----------
     Object.keys(rurekey).forEach((ikey) => {
       if (rurekey[ikey].test(e.name)) {
         e.name = e.name.replace(rurekey[ikey], ikey);
@@ -425,7 +431,7 @@ function operator(pro) {
       }
     });
 
-    // block-quic
+    // ---------- block-quic 控制 ----------
     if (blockquic == "on") {
       e["block-quic"] = "on";
     } else if (blockquic == "off") {
@@ -434,7 +440,7 @@ function operator(pro) {
       delete e["block-quic"];
     }
 
-    // blkey 未在预替换中处理
+    // ---------- 如果 blkey 未在预替换中处理，则在此处理 ----------
     if (!bktf && BLKEY) {
       let BLKEY_REPLACE = "", re = false;
       BLKEYS.forEach((i) => {
@@ -448,7 +454,7 @@ function operator(pro) {
       retainKey = re ? BLKEY_REPLACE : BLKEYS.filter((items) => e.name.includes(items));
     }
 
-    // blgd
+    // ---------- 保留固定格式标识（blgd） ----------
     let ikey = "", ikeys = "";
     if (blgd) {
       regexArray.forEach((regex, index) => {
@@ -458,7 +464,7 @@ function operator(pro) {
       });
     }
 
-    // 倍率处理
+    // ---------- 倍率处理（bl 或 blbz 独立触发，blbz 覆盖 bl） ----------
     const extractRate = bl || blbz;
     if (extractRate) {
       const match = e.name.match(
@@ -473,20 +479,23 @@ function operator(pro) {
       }
     }
 
-    // 地区匹配
+    // ---------- 提取测速信息（blcs） ----------
+    let csStr = "";
+    if (blcs) {
+      const speedMatch = e.name.match(/(\d+(?:\.\d+)?)\s*([Mm]bps)/);
+      if (speedMatch) {
+        csStr = speedMatch[1] + "Mbps";   // 统一单位为大写
+      }
+    }
+
+    // ---------- 地区匹配 ----------
     !GetK && ObjKA(Allmap);
     const findKey = AMK.find(([key]) => e.name.includes(key));
 
-    let firstName = "", nNames = "";
-    if (nf) {
-      firstName = FNAME;
-    } else {
-      nNames = FNAME;
-    }
-
+    let restParts = [];
     if (findKey?.[1]) {
       const findKeyValue = findKey[1];
-      let keyover = [], usflag = "";
+      let usflag = "";
       if (addflag) {
         const index = outList.indexOf(findKeyValue);
         if (index !== -1) {
@@ -494,23 +503,38 @@ function operator(pro) {
           usflag = usflag === "🇹🇼" ? "🇨🇳" : usflag;
         }
       }
-      keyover = keyover
-        .concat(firstName, usflag, nNames, findKeyValue, retainKey, ikey, ikeys)
-        .filter((k) => k !== "");
-      e.name = keyover.join(FGF);
+      // 组装除前缀外的所有部分（顺序：国旗、地区名、保留关键词、测速、倍率、固定标识）
+      restParts = [usflag, findKeyValue, retainKey, csStr, ikey, ikeys]
+        .filter(k => k !== "");
     } else {
+      // 未匹配到地区
       if (nm) {
-        e.name = FNAME + FGF + e.name;
+        e.name = FNAME ? FNAME + "-" + e.name : e.name;
       } else {
         e.name = null;
       }
+      return; // 跳过后续处理
     }
+
+    // 将除前缀外的部分用 FGF 连接
+    const restStr = restParts.join(FGF);
+    // 前缀固定放最前，用 "-" 连接
+    e.name = FNAME ? FNAME + "-" + restStr : restStr;
   });
 
+  // ---------- 4e. 移除被标记为 null 的节点 ----------
   pro = pro.filter((e) => e.name !== null);
+
+  // ---------- 4f. 执行分组编号（添加序号） ----------
   jxh(pro);
+
+  // ---------- 4g. 若 one 参数启用，移除单节点序号 ----------
   numone && oneP(pro);
+
+  // ---------- 4h. 若 blpx 启用，对保留标识进行分组排序 ----------
   blpx && (pro = fampx(pro));
+
+  // ---------- 4i. 若 key 参数启用，执行最终过滤 ----------
   key && (pro = pro.filter((e) => !keyb.test(e.name)));
 
   return pro;
