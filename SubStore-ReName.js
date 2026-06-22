@@ -4,7 +4,7 @@
  * 功能说明：对代理节点进行智能重命名、地区识别、关键词保留、过滤和排序。
  * 适用平台：Sub-Store (https://sub-store.app/)
  * 更新日期：2026-06-23
- * 版本：2.8 (前缀与后续用 - 连接，其余部分由 fgf 控制)
+ * 版本：2.9 (前缀与后续统一使用 fgf 连接，不再单独加 -)
  * 作者：lylywayr
  * 
  * ============================================================================
@@ -13,7 +13,6 @@
  * 格式：https://raw.githubusercontent.com/你的用户名/仓库名/SubStore-ReName.js#参数1=值&参数2=值...
  * 
  * 注意：所有布尔类型参数（如 flag、clear、bl 等）只有显式传递 =1 或 =true 时才启用。
- * 例如：flag=1 启用，flag=0 或 不传 则关闭。
  * 
  * ============================================================================
  * 完整参数列表（按功能分组）：
@@ -21,11 +20,11 @@
  * 1. 地区识别与输出格式
  *   in=zh|en|quan|flag       输入识别方式（zh/cn：中文，en/us：英文缩写，quan：英文全称，flag/gq：国旗），默认自动判断
  *   out=zh|en|quan|flag      输出格式（默认同 in 或 zh）
- *   fgf=分隔符               除前缀和编号外，其他部分之间的分隔符（默认空格，需 URL 编码）
+ *   fgf=分隔符               所有部分之间的分隔符（包括前缀和后续），默认空格，需 URL 编码
  *   sn=分隔符                地区名与序号之间的分隔符（默认空格）
  * 
  * 2. 前缀与排序
- *   name=机场名称            添加机场前缀（固定放在最前，与后续用 - 连接）
+ *   name=机场名称            添加机场前缀（该值本身可包含分隔符，如 "机场-"）
  *   one=1                    移除只有一个节点时的 "01" 序号
  * 
  * 3. 关键词保留与替换
@@ -53,17 +52,14 @@
  * 
  * ============================================================================
  * 使用示例：
- *   # 仅添加前缀和国旗
- *   https://.../SubStore-ReName.js#name=我的机场&flag=1
+ *   # 前缀为 "机场-"，后续用空格分隔，编号也用空格
+ *   https://.../SubStore-ReName.js#name=机场-&blcs=1&bl=1
  * 
- *   # 提取倍率，标准化为“倍率”，保留 IPLC 和 GPT 关键词，清理乱名，排除国内节点
- *   https://.../SubStore-ReName.js#name=我的机场&blbz=1&blkey=IPLC+GPT&clear=1&pcgn=1
+ *   # 前缀为 "机场"（后无分隔符），统一用 "-" 分隔所有部分
+ *   https://.../SubStore-ReName.js#name=机场&fgf=-&sn=-
  * 
- *   # 保留测速，前缀用 -，其余用空格，编号用空格（默认）
- *   https://.../SubStore-ReName.js#name=机场&blcs=1&bl=1
- * 
- *   # 所有部分用 - 连接（前缀 -，内部 -，编号 -）
- *   https://.../SubStore-ReName.js#name=机场&blcs=1&bl=1&fgf=-&sn=-
+ *   # 前缀自带 "-"，后续用空格，编号用 "-"
+ *   https://.../SubStore-ReName.js#name=机场-&fgf= &&sn=-
  * ============================================================================
  */
 
@@ -78,7 +74,7 @@ const nx = parseBool(inArg.nx);
 const bl = parseBool(inArg.bl);
 const blbz = parseBool(inArg.blbz);
 const blcs = parseBool(inArg.blcs);
-const nf = parseBool(inArg.nf);   // 保留但不再使用，前缀始终放最前用 - 连接
+const nf = parseBool(inArg.nf);   // 保留但不再使用（前缀始终放最前）
 const key = parseBool(inArg.key);
 const blgd = parseBool(inArg.blgd);
 const blpx = parseBool(inArg.blpx);
@@ -484,7 +480,7 @@ function operator(pro) {
     if (blcs) {
       const speedMatch = e.name.match(/(\d+(?:\.\d+)?)\s*([Mm]bps)/);
       if (speedMatch) {
-        csStr = speedMatch[1] + "Mbps";   // 统一单位为大写
+        csStr = speedMatch[1] + "Mbps";
       }
     }
 
@@ -509,7 +505,8 @@ function operator(pro) {
     } else {
       // 未匹配到地区
       if (nm) {
-        e.name = FNAME ? FNAME + "-" + e.name : e.name;
+        // 前缀与原名之间也使用 fgf 连接（保持一致）
+        e.name = FNAME ? FNAME + FGF + e.name : e.name;
       } else {
         e.name = null;
       }
@@ -518,8 +515,8 @@ function operator(pro) {
 
     // 将除前缀外的部分用 FGF 连接
     const restStr = restParts.join(FGF);
-    // 前缀固定放最前，用 "-" 连接
-    e.name = FNAME ? FNAME + "-" + restStr : restStr;
+    // 前缀与后续也用 FGF 连接（不再额外加 -）
+    e.name = FNAME ? FNAME + FGF + restStr : restStr;
   });
 
   // ---------- 4e. 移除被标记为 null 的节点 ----------
