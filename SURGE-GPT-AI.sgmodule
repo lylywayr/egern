@@ -1,0 +1,7 @@
+#!name=网络解锁监测
+#!desc=检测 Netflix、Disney+、ChatGPT、Claude、Gemini 等服务的解锁状态
+#!author=lylywayr
+#!version=0.1
+
+[Panel]
+网络解锁监测 = script-path=https://raw.githubusercontent.com/lylywayr/egern/refs/heads/main/SURGE-GPT-AI.js
