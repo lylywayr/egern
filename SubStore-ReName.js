@@ -1,7 +1,7 @@
 /**
  * ============================================================================
  * 脚本名称：Sub-Store 节点重命名脚本 (SubStore-ReName.js)
- * 版本：4.0
+ * 版本：4.3
  * 功能：节点重命名、地区识别、关键词保留、过滤、排序、添加国旗、去重。
  * 适用平台：Sub-Store (https://sub-store.app/)
  * 更新日期：2026-06-23
@@ -44,6 +44,8 @@
  *   jdqc=1                   去重（server+port+type 完全一致）
  *   jdqcyg=1                 去重（同一 server 只保留一个，优先级：Snell > hy2/tuic > AnyTLS > Trojan > Vmess > Shadowsocks > Vless > 其他UDP > 其他）
  *                             ★ jdqcyg 优先级高于 jdqc，启用时 jdqc 不生效
+ *   jjdqc=1                  仅去重模式。启用后，其他所有参数均不生效，
+ *                            只执行去重操作（规则由 jdqc 或 jdqcyg 决定），不进行重命名等操作
  * 
  * 6. 其他
  *   flag=1                   添加国旗
@@ -52,11 +54,14 @@
  * 
  * ============================================================================
  * 使用示例：
- *   # 按 server 去重，优先选择 Snell 或 hy2/tuic
- *   https://.../SubStore-ReName.js#jdqcyg=1&name=机场
+ *   # 仅按 server 去重，不重命名（使用 jdqcyg 规则）
+ *   https://.../SubStore-ReName.js#jjdqc=1&jdqcyg=1
  * 
- *   # 三重去重（完全匹配）仅当 jdqcyg=0 时生效
- *   https://.../SubStore-ReName.js#jdqc=1
+ *   # 仅三重去重，不重命名（使用 jdqc 规则）
+ *   https://.../SubStore-ReName.js#jjdqc=1&jdqc=1
+ * 
+ *   # 按 server 去重并重命名（正常模式）
+ *   https://.../SubStore-ReName.js#jdqcyg=1&name=机场&flag=1
  * ============================================================================
  */
 
@@ -79,6 +84,7 @@ const nm = parseBool(inArg.nm);
 const pcgn = parseBool(inArg.pcgn);
 const jdqc = parseBool(inArg.jdqc);
 const jdqcyg = parseBool(inArg.jdqcyg);
+const jjdqc = parseBool(inArg.jjdqc);
 
 const FGF = inArg.fgf === undefined ? " " : (inArg.fgf === "0" ? "" : inArg.fgf);
 const FNAME = inArg.name == undefined ? "" : inArg.name;
@@ -347,27 +353,17 @@ function ObjKA(i) {
 }
 
 // ---------- 协议优先级函数（用于 jdqcyg） ----------
-// 数字越小优先级越高，并列返回相同数字
 function getPriority(type) {
   if (!type) return 10;
   const t = type.toLowerCase();
-  // 1. Snell
   if (t.includes('snell')) return 1;
-  // 2. hy2 / hysteria2 / tuic（并列第二）
   if (t.includes('hy2') || t.includes('hysteria2') || t.includes('tuic')) return 2;
-  // 3. AnyTLS
   if (t.includes('anytls')) return 3;
-  // 4. Trojan
   if (t.includes('trojan')) return 4;
-  // 5. Vmess
   if (t.includes('vmess')) return 5;
-  // 6. Shadowsocks (ss)
   if (t.includes('ss') && !t.includes('vless')) return 6;
-  // 7. Vless
   if (t.includes('vless')) return 7;
-  // 剩余：优先 UDP
   if (t.includes('wireguard') || t.includes('hysteria') || t.includes('quic') || t.includes('udp')) return 8;
-  // 其他非 UDP
   return 9;
 }
 
@@ -375,17 +371,17 @@ function getPriority(type) {
 // 4. 主函数 operator
 // ==========================================================================
 function operator(pro) {
-  // ---------- 4a. 去重 ----------
-  // jdqcyg 优先级高于 jdqc，若 jdqcyg 启用则忽略 jdqc
+  // ========================================================================
+  // 第一步：去重（无论 jjdqc 是否启用，都先执行去重）
+  // ========================================================================
   if (jdqcyg) {
-    // 按 server 分组
+    // 按 server 去重，优先保留高优先级协议
     const groupMap = new Map();
     pro.forEach(node => {
       const server = node.server || '';
       if (!groupMap.has(server)) groupMap.set(server, []);
       groupMap.get(server).push(node);
     });
-    // 每组选择优先级最高的节点（相同优先级则保留第一个）
     const result = [];
     for (const [server, nodes] of groupMap) {
       let best = nodes[0];
@@ -411,13 +407,25 @@ function operator(pro) {
     });
   }
 
-  // ---------- 4b. 排除中国大陆节点 ----------
+  // ========================================================================
+  // 第二步：检查 jjdqc（仅去重模式）
+  // 如果 jjdqc=1，直接返回去重后的结果，不进行任何其他操作
+  // ========================================================================
+  if (jjdqc) {
+    return pro;
+  }
+
+  // ========================================================================
+  // 第三步：以下为正常模式（执行所有其他操作）
+  // ========================================================================
+
+  // ---------- 排除中国大陆节点 ----------
   if (pcgn) {
     const chinaRegex = /(?:^|\s)(北京|上海|广州|深圳|杭州|成都|武汉|南京|重庆|天津|苏州|郑州|长沙|西安|东莞|青岛|沈阳|宁波|昆明|大连|厦门|合肥|佛山|福州|哈尔滨|济南|长春|温州|石家庄|贵阳|常州|徐州|嘉兴|金华|南宁|泉州|呼和浩特|太原|乌鲁木齐|兰州|银川|海口|拉萨|西宁|南昌|中国|国内|CN|China)(?=\s|$)/i;
     pro = pro.filter(p => !chinaRegex.test(p.name));
   }
 
-  // ---------- 4c. 构建地区映射 ----------
+  // ---------- 构建地区映射 ----------
   const Allmap = {};
   const outList = getList(outputName);
   let inputList, retainKey = "";
@@ -432,7 +440,7 @@ function operator(pro) {
     });
   });
 
-  // ---------- 4d. 过滤 ----------
+  // ---------- 过滤 ----------
   if (clear || nx || blnx || key) {
     pro = pro.filter((res) => {
       const resname = res.name;
@@ -458,7 +466,7 @@ function operator(pro) {
     });
   }
 
-  // ---------- 4e. 重命名每个节点 ----------
+  // ---------- 重命名每个节点 ----------
   pro.forEach((e) => {
     let bktf = false, ens = e.name;
 
