@@ -1,71 +1,62 @@
 /**
  * ============================================================================
  * 脚本名称：Sub-Store 节点重命名脚本 (SubStore-ReName.js)
- * 版本：3.4
- * 功能：对代理节点进行智能重命名、地区识别、关键词保留、过滤、排序和添加国旗。
+ * 版本：4.0
+ * 功能：节点重命名、地区识别、关键词保留、过滤、排序、添加国旗、去重。
  * 适用平台：Sub-Store (https://sub-store.app/)
  * 更新日期：2026-06-23
  * 作者：lylywayr
  * 
  * ============================================================================
  * 使用方法：
- * 将本脚本作为 Sub-Store 的“脚本操作”，通过 URL 参数传递配置。
- * 格式：https://raw.githubusercontent.com/你的用户名/仓库名/SubStore-ReName.js#参数1=值&参数2=值...
- * 
- * 所有布尔类型参数（如 flag, clear, bl 等）只有显式传递 =1 或 =true 时才启用。
+ * https://raw.githubusercontent.com/你的用户名/仓库名/SubStore-ReName.js#参数1=值&参数2=值...
+ * 所有布尔参数传 =1 启用。
  * 
  * ============================================================================
  * 参数列表（按功能分组）：
  * 
  * 1. 地区识别与输出格式
- *   in=zh|en|quan|flag       输入识别方式（zh/cn：中文，en/us：英文缩写，
- *                             quan：英文全称，flag/gq：国旗），默认自动判断
+ *   in=zh|en|quan|flag       输入识别方式（zh中文，en英文缩写，quan英文全称，flag国旗）
  *   out=zh|en|quan|flag      输出格式（默认同 in 或 zh）
- *   fgf=分隔符               唯一连接符，控制所有部分（包括编号）之间的分隔。
- *                            不传 → 默认空格
- *                            传 0  → 无连接符（空字符串）
- *                            传其他值（如 -、_）→ 直接使用该值，不进行编码。
+ *   fgf=分隔符               唯一连接符（默认空格，传 0 无连接符）
  * 
- * 2. 前缀与排序
- *   name=机场名称            添加机场前缀，会通过 fgf 与后续连接（无需自带分隔符）
- *   one=1                    移除只有一个节点时的 "01" 序号
+ * 2. 前缀与编号
+ *   name=机场名称            添加前缀，通过 fgf 连接
+ *   one=1                    移除单节点编号
  * 
  * 3. 关键词保留与替换
- *   blkey=关键词1+关键词2>新名  保留指定的自定义关键词，多个用 + 连接。
- *                             支持用 > 将原词替换为新词（如 IPLC>专线）
- *   blgd=1                   保留固定格式标识（如 IPLC、IEPL、核心、边缘、家宽等）
- *   bl=1                     提取并保留倍率标识（如 x2、3×），显示为 “数字×”
- *   blbz=1                   提取并保留倍率标识，显示为 “数字倍率”（如 2倍率），
- *                             ★ 若同时启用 bl 和 blbz，blbz 覆盖 bl 的格式
- *   blcs=1                   提取测速信息，显示为 “数字Mbps”（如 89.10Mbps）
- *   blnx=1                   只保留高倍率（>1x）节点，删除 1x 或无倍率节点
- *   nx=1                     保留 1x 或无倍率节点（与 bl 配合使用）
- *   blpx=1                   对保留的倍率标识进行分组排序（特殊标识优先）
+ *   blkey=关键词1+关键词2>新名  保留自定义关键词，支持替换
+ *   blgd=1                   保留固定格式标识（IPLC、IEPL等）
+ *   bl=1                     倍率显示为 “数字×”
+ *   blbz=1                   倍率显示为 “数字倍率”（覆盖 bl）
+ *   blcs=1                   测速显示为 “数字Mbps”
+ *   blnx=1                   只保留高倍率（>1x）节点
+ *   nx=1                     保留 1x 或无倍率节点
+ *   blpx=1                   对保留标识排序（特殊优先）
  * 
- * 4. 过滤与清理
- *   clear=1                  清理含乱名关键词（如“套餐”“到期”“官网”“回国”等）的节点
- *   pcgn=1                   排除中国大陆节点（基于城市名、国家名等），不影响港澳台
- *   key=1                    启用额外过滤规则（基于内部正则）
- *   nm=1                     保留未匹配到地区的节点（只添加前缀，不改变原名）
+ * 4. 过滤
+ *   clear=1                  清理乱名（套餐、到期、官网、回国等）
+ *   pcgn=1                   排除中国大陆节点
+ *   key=1                    额外过滤
+ *   nm=1                     保留未匹配地区节点
  * 
- * 5. 其他功能
- *   flag=1                   在节点名最前面添加国旗图标（根据地区自动匹配）
- *   blockquic=on|off         控制是否添加 block-quic 参数（on/off）
- *   debug=1                  调试模式（输出日志，需脚本支持）
+ * 5. 去重
+ *   jdqc=1                   去重（server+port+type 完全一致）
+ *   jdqcyg=1                 去重（同一 server 只保留一个，优先级：Snell > hy2/tuic > AnyTLS > Trojan > Vmess > Shadowsocks > Vless > 其他UDP > 其他）
+ *                             ★ jdqcyg 优先级高于 jdqc，启用时 jdqc 不生效
+ * 
+ * 6. 其他
+ *   flag=1                   添加国旗
+ *   blockquic=on|off         控制 block-quic
+ *   debug=1                  调试模式
  * 
  * ============================================================================
  * 使用示例：
- *   # 添加前缀、国旗、倍率标准化、测速，编号紧跟地区，连接符为空格
- *   https://.../SubStore-ReName.js#name=机场-&flag=1&blbz=1&blcs=1&fgf= &&one=1
- *   结果：🇭🇰 机场- 香港 01 0.1倍率 36.93Mbps
+ *   # 按 server 去重，优先选择 Snell 或 hy2/tuic
+ *   https://.../SubStore-ReName.js#jdqcyg=1&name=机场
  * 
- *   # 所有部分用短横线连接，无前缀
- *   https://.../SubStore-ReName.js#flag=1&bl=1&fgf=-&sn=-
- *   结果：🇭🇰-香港-01-0.1×
- * 
- *   # 无连接符（所有紧挨）
- *   https://.../SubStore-ReName.js#flag=1&blbz=1&fgf=0
- *   结果：🇭🇰香港010.1倍率
+ *   # 三重去重（完全匹配）仅当 jdqcyg=0 时生效
+ *   https://.../SubStore-ReName.js#jdqc=1
  * ============================================================================
  */
 
@@ -86,14 +77,14 @@ const clear = parseBool(inArg.clear);
 const addflag = parseBool(inArg.flag);
 const nm = parseBool(inArg.nm);
 const pcgn = parseBool(inArg.pcgn);
+const jdqc = parseBool(inArg.jdqc);
+const jdqcyg = parseBool(inArg.jdqcyg);
 
-// 唯一连接符：未定义 → 空格，值为 "0" → 空字符串，否则直接使用
 const FGF = inArg.fgf === undefined ? " " : (inArg.fgf === "0" ? "" : inArg.fgf);
 const FNAME = inArg.name == undefined ? "" : inArg.name;
 const BLKEY = inArg.blkey == undefined ? "" : inArg.blkey;
 const blockquic = inArg.blockquic == undefined ? "" : inArg.blockquic;
 
-// 地区格式映射
 const nameMap = { cn: "cn", zh: "cn", us: "us", en: "us", quan: "quan", gq: "gq", flag: "gq" };
 const inname = nameMap[inArg.in] || "";
 const outputName = nameMap[inArg.out] || "";
@@ -184,28 +175,23 @@ const QC = [
 ];
 
 // ==========================================================================
-// 2. 正则与关键词（用于各种过滤和提取）
+// 2. 正则与关键词
 // ==========================================================================
 
-// specialRegex 用于 blpx 排序（判断是否包含特殊标识）
 const specialRegex = [
-  /(\d\.)?\d+×/,               // 匹配倍率
-  /IPLC|IEPL|Kern|Edge|Pro|Std|Exp|Biz|Fam|Game|Buy|Zx|LB|Game/  // 常见关键词
+  /(\d\.)?\d+×/,
+  /IPLC|IEPL|Kern|Edge|Pro|Std|Exp|Biz|Fam|Game|Buy|Zx|LB|Game/
 ];
 
-// clear 参数使用的乱名关键词（匹配则删除节点）
 const nameclear =
   /(套餐|到期|有效|剩余|版本|已用|过期|失联|测试|官方|网址|备用|群|TEST|客服|网站|获取|订阅|流量|机场|下次|官址|联系|邮箱|工单|学术|USE|USED|TOTAL|EXPIRE|EMAIL|官网|回国)/i;
 
-// blgd 使用的固定格式标识（与 valueArray 一一对应）
-// prettier-ignore
 const regexArray = [
   /ˣ²/, /ˣ³/, /ˣ⁴/, /ˣ⁵/, /ˣ⁶/, /ˣ⁷/, /ˣ⁸/, /ˣ⁹/, /ˣ¹⁰/,
   /ˣ²⁰/, /ˣ³⁰/, /ˣ⁴⁰/, /ˣ⁵⁰/,
   /IPLC/i, /IEPL/i, /核心/, /边缘/, /高级/, /标准/, /实验/, /商宽/, /家宽/,
   /游戏|game/i, /购物/, /专线/, /LB/, /cloudflare/i, /\budp\b/i, /\bgpt\b/i, /udpn\b/
 ];
-// prettier-ignore
 const valueArray = [
   "2×","3×","4×","5×","6×","7×","8×","9×","10×",
   "20×","30×","40×","50×",
@@ -213,17 +199,13 @@ const valueArray = [
   "Buy","Zx","LB","CF","UDP","GPT","UDPN"
 ];
 
-// blnx 和 nx 过滤用的正则
 const nameblnx = /(高倍|(?!1)2+(x|倍)|ˣ²|ˣ³|ˣ⁴|ˣ⁵|ˣ¹⁰)/i;
 const namenx   = /(高倍|(?!1)(0\.|\d)+(x|倍)|ˣ²|ˣ³|ˣ⁴|ˣ⁵|ˣ¹⁰)/i;
 
-// key 参数使用的过滤正则
 const keya = /港|Hong|HK|新加坡|SG|Singapore|日本|Japan|JP|美国|United States|US|韩|土耳其|TR|Turkey|Korea|KR|🇸🇬|🇭🇰|🇯🇵|🇺🇸|🇰🇷|🇹🇷/i;
 const keyb = /(((1|2|3|4)\d)|(香港|Hong|HK) 0[5-9]|((新加坡|SG|Singapore|日本|Japan|JP|美国|United States|US|韩|土耳其|TR|Turkey|Korea|KR) 0[3-9]))/i;
 
-// 预替换映射表：在地区匹配前将各种别名统一为标准名称
 const rurekey = {
-  // 美洲
   "美国": /美西|美东|洛杉矶|圣何塞|硅谷|俄勒冈|西雅图|达拉斯|亚特兰大|迈阿密|纽约|芝加哥|凤凰城|丹佛|拉斯维加斯|休斯顿|华盛顿|旧金山|USA|America|United States|波特兰|哥伦布/gi,
   "加拿大": /温哥华|多伦多|蒙特利尔|卡尔加里|渥太华|CA|Canada/gi,
   "墨西哥": /墨西哥城|MX|Mexico/gi,
@@ -233,7 +215,6 @@ const rurekey = {
   "哥伦比亚": /波哥大|CO|Colombia/gi,
   "秘鲁": /利马|PE|Peru/gi,
   "委内瑞拉": /加拉加斯|VE|Venezuela/gi,
-  // 欧洲
   "英国": /伦敦|曼彻斯特|伯明翰|UK|United Kingdom|Britain|Great Britain/gi,
   "德国": /法兰克福|柏林|慕尼黑|杜塞尔多夫|DE|Germany|Frankfurt/gi,
   "法国": /巴黎|马赛|里昂|FR|France/gi,
@@ -256,7 +237,6 @@ const rurekey = {
   "乌克兰": /基辅|UA|Ukraine/gi,
   "俄罗斯": /莫斯科|圣彼得堡|RU|Russia/gi,
   "土耳其": /伊斯坦布尔|安卡拉|TR|Turkey/gi,
-  // 亚洲
   "香港": /香港|Hongkong|HONG KONG|HK/gi,
   "台湾": /台北|新北|台中|高雄|台南|台(?!.*线)|Taipei|Taiwan|TW/gi,
   "日本": /东京|大阪|名古屋|福冈|札幌|JP|Japan|Tokyo|Osaka/gi,
@@ -284,16 +264,13 @@ const rurekey = {
   "卡塔尔": /多哈|QA|Qatar/gi,
   "阿曼": /马斯喀特|OM|Oman/gi,
   "巴林": /麦纳麦|BH|Bahrain/gi,
-  // 大洋洲
   "澳大利亚": /悉尼|墨尔本|布里斯班|珀斯|阿德莱德|AU|Australia/gi,
   "新西兰": /奥克兰|惠灵顿|NZ|New Zealand/gi,
-  // 非洲
   "南非": /约翰内斯堡|开普敦|比勒陀利亚|ZA|South Africa/gi,
   "埃及": /开罗|亚历山大|EG|Egypt/gi,
   "尼日利亚": /拉各斯|阿布贾|NG|Nigeria/gi,
   "肯尼亚": /内罗毕|蒙巴萨|KE|Kenya/gi,
   "摩洛哥": /卡萨布兰卡|拉巴特|MA|Morocco/gi,
-  // 其他兼容
   GB: /UK/g,
   "B-G-P": /BGP/g,
   "Russia Moscow": /Moscow/g,
@@ -335,7 +312,6 @@ const rurekey = {
 // 3. 辅助函数
 // ==========================================================================
 
-// 根据参数获取对应的地区列表
 function getList(arg) {
   switch (arg) {
     case 'us':   return EN;
@@ -345,7 +321,6 @@ function getList(arg) {
   }
 }
 
-// 对保留的标识进行分组排序（特殊标识优先）
 function fampx(pro) {
   const wis = [];
   const wnout = [];
@@ -365,24 +340,84 @@ function fampx(pro) {
   return wnout.concat(wis);
 }
 
-// 缓存地区映射表（提高性能）
 let GetK = false, AMK = [];
 function ObjKA(i) {
   GetK = true;
   AMK = Object.entries(i);
 }
 
+// ---------- 协议优先级函数（用于 jdqcyg） ----------
+// 数字越小优先级越高，并列返回相同数字
+function getPriority(type) {
+  if (!type) return 10;
+  const t = type.toLowerCase();
+  // 1. Snell
+  if (t.includes('snell')) return 1;
+  // 2. hy2 / hysteria2 / tuic（并列第二）
+  if (t.includes('hy2') || t.includes('hysteria2') || t.includes('tuic')) return 2;
+  // 3. AnyTLS
+  if (t.includes('anytls')) return 3;
+  // 4. Trojan
+  if (t.includes('trojan')) return 4;
+  // 5. Vmess
+  if (t.includes('vmess')) return 5;
+  // 6. Shadowsocks (ss)
+  if (t.includes('ss') && !t.includes('vless')) return 6;
+  // 7. Vless
+  if (t.includes('vless')) return 7;
+  // 剩余：优先 UDP
+  if (t.includes('wireguard') || t.includes('hysteria') || t.includes('quic') || t.includes('udp')) return 8;
+  // 其他非 UDP
+  return 9;
+}
+
 // ==========================================================================
 // 4. 主函数 operator
 // ==========================================================================
 function operator(pro) {
-  // ---------- 4a. 排除中国大陆节点（pcgn） ----------
+  // ---------- 4a. 去重 ----------
+  // jdqcyg 优先级高于 jdqc，若 jdqcyg 启用则忽略 jdqc
+  if (jdqcyg) {
+    // 按 server 分组
+    const groupMap = new Map();
+    pro.forEach(node => {
+      const server = node.server || '';
+      if (!groupMap.has(server)) groupMap.set(server, []);
+      groupMap.get(server).push(node);
+    });
+    // 每组选择优先级最高的节点（相同优先级则保留第一个）
+    const result = [];
+    for (const [server, nodes] of groupMap) {
+      let best = nodes[0];
+      let bestPriority = getPriority(best.type);
+      for (let i = 1; i < nodes.length; i++) {
+        const p = getPriority(nodes[i].type);
+        if (p < bestPriority) {
+          bestPriority = p;
+          best = nodes[i];
+        }
+      }
+      result.push(best);
+    }
+    pro = result;
+  } else if (jdqc) {
+    // 三重去重（server + port + type 完全一致）
+    const seen = new Set();
+    pro = pro.filter(node => {
+      const key = `${node.server || ''}:${node.port || ''}:${node.type || ''}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  // ---------- 4b. 排除中国大陆节点 ----------
   if (pcgn) {
     const chinaRegex = /(?:^|\s)(北京|上海|广州|深圳|杭州|成都|武汉|南京|重庆|天津|苏州|郑州|长沙|西安|东莞|青岛|沈阳|宁波|昆明|大连|厦门|合肥|佛山|福州|哈尔滨|济南|长春|温州|石家庄|贵阳|常州|徐州|嘉兴|金华|南宁|泉州|呼和浩特|太原|乌鲁木齐|兰州|银川|海口|拉萨|西宁|南昌|中国|国内|CN|China)(?=\s|$)/i;
     pro = pro.filter(p => !chinaRegex.test(p.name));
   }
 
-  // ---------- 4b. 构建地区映射表 ----------
+  // ---------- 4c. 构建地区映射 ----------
   const Allmap = {};
   const outList = getList(outputName);
   let inputList, retainKey = "";
@@ -397,7 +432,7 @@ function operator(pro) {
     });
   });
 
-  // ---------- 4c. 执行过滤（clear, nx, blnx, key） ----------
+  // ---------- 4d. 过滤 ----------
   if (clear || nx || blnx || key) {
     pro = pro.filter((res) => {
       const resname = res.name;
@@ -409,10 +444,9 @@ function operator(pro) {
   }
 
   const BLKEYS = BLKEY ? BLKEY.split("+") : "";
-  const regionCount = {};   // 用于编号
-  const regionTotal = {};   // 用于统计总数（one）
+  const regionCount = {};
+  const regionTotal = {};
 
-  // 先统计每个地区的节点总数（用于 one 参数）
   if (numone) {
     pro.forEach(e => {
       !GetK && ObjKA(Allmap);
@@ -424,11 +458,10 @@ function operator(pro) {
     });
   }
 
-  // ---------- 4d. 遍历每个节点进行重命名 ----------
+  // ---------- 4e. 重命名每个节点 ----------
   pro.forEach((e) => {
     let bktf = false, ens = e.name;
 
-    // ---------- 预替换（别名统一） ----------
     Object.keys(rurekey).forEach((ikey) => {
       if (rurekey[ikey].test(e.name)) {
         e.name = e.name.replace(rurekey[ikey], ikey);
@@ -455,7 +488,6 @@ function operator(pro) {
       }
     });
 
-    // ---------- block-quic ----------
     if (blockquic == "on") {
       e["block-quic"] = "on";
     } else if (blockquic == "off") {
@@ -464,7 +496,6 @@ function operator(pro) {
       delete e["block-quic"];
     }
 
-    // ---------- blkey（未在预替换中处理） ----------
     if (!bktf && BLKEY) {
       let BLKEY_REPLACE = "", re = false;
       BLKEYS.forEach((i) => {
@@ -478,7 +509,6 @@ function operator(pro) {
       retainKey = re ? BLKEY_REPLACE : BLKEYS.filter((items) => e.name.includes(items));
     }
 
-    // ---------- blgd（保留固定格式标识） ----------
     let ikey = "", ikeys = "";
     if (blgd) {
       regexArray.forEach((regex, index) => {
@@ -488,7 +518,6 @@ function operator(pro) {
       });
     }
 
-    // ---------- 倍率（bl 或 blbz） ----------
     const extractRate = bl || blbz;
     if (extractRate) {
       const match = e.name.match(
@@ -497,13 +526,11 @@ function operator(pro) {
       if (match) {
         const rev = match[0].match(/(\d[\d.]*)/)[0];
         if (rev !== "1") {
-          // blbz 覆盖 bl 的格式：blbz → "数字倍率"，bl → "数字×"
           ikey = blbz ? rev + "倍率" : rev + "×";
         }
       }
     }
 
-    // ---------- 测速（blcs） ----------
     let csStr = "";
     if (blcs) {
       const speedMatch = e.name.match(/(\d+(?:\.\d+)?)\s*([Mm]bps)/);
@@ -512,7 +539,6 @@ function operator(pro) {
       }
     }
 
-    // ---------- 地区匹配 ----------
     !GetK && ObjKA(Allmap);
     const findKey = AMK.find(([key]) => e.name.includes(key));
 
@@ -520,33 +546,24 @@ function operator(pro) {
     let regionPure = "";
     if (findKey?.[1]) {
       regionPure = findKey[1];
-
-      // 添加国旗（flag 参数）
       if (addflag) {
         const index = outList.indexOf(regionPure);
         if (index !== -1) {
           usflag = FG[index];
-          usflag = usflag === "🇹🇼" ? "🇨🇳" : usflag; // 台湾用中国国旗
+          usflag = usflag === "🇹🇼" ? "🇨🇳" : usflag;
         }
       }
-
-      // 编号（两位，从 01 开始）
       if (!regionCount[regionPure]) regionCount[regionPure] = 0;
       regionCount[regionPure]++;
       const num = String(regionCount[regionPure]).padStart(2, '0');
-      const regionWithNum = regionPure + FGF + num; // 地区名 + 连接符 + 编号
+      const regionWithNum = regionPure + FGF + num;
 
-      // 顺序：地区+编号 → 保留关键词 → 倍率 → 测速 → 固定标识
       const restParts = [regionWithNum, retainKey, ikey, csStr, ikeys].filter(k => k !== "");
-      let mainPart = restParts.join(FGF);           // 各部分用 fgf 连接
-
-      if (FNAME) mainPart = FNAME + FGF + mainPart; // name 与后续用 fgf 连接
-
-      // 国旗放在最前面
+      let mainPart = restParts.join(FGF);
+      if (FNAME) mainPart = FNAME + FGF + mainPart;
       e.name = usflag ? usflag + (mainPart ? FGF : '') + mainPart : mainPart;
-      e._region = regionPure; // 用于 one 处理
+      e._region = regionPure;
     } else {
-      // 未匹配到地区
       if (nm) {
         e.name = FNAME ? FNAME + FGF + e.name : e.name;
       } else {
@@ -555,10 +572,8 @@ function operator(pro) {
     }
   });
 
-  // 移除被标记为 null 的节点
   pro = pro.filter(e => e.name !== null);
 
-  // ---------- one 参数：移除单节点的编号 ----------
   if (numone) {
     pro.forEach(e => {
       if (e._region && regionTotal[e._region] === 1) {
@@ -568,10 +583,7 @@ function operator(pro) {
     });
   }
 
-  // ---------- blpx 排序 ----------
   if (blpx) pro = fampx(pro);
-
-  // ---------- key 最终过滤 ----------
   if (key) pro = pro.filter(e => !keyb.test(e.name));
 
   return pro;
