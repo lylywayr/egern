@@ -1,0 +1,35 @@
+#!name=菜鸟包裹去广告（去推广）
+#!desc=功能: 移除开屏广告、寄件券弹窗、寄件页活动弹窗、首页横幅/弹窗\n说明: 已移除原模块中把界面文字/图片替换为作者频道地址的推广逻辑\n来源: 基于 TossLab 模块修改
+#!system=ios
+
+[Rule]
+# 阻断阿里系 HTTPDNS、日志追踪与 QUIC (UDP 443)
+AND,((USER-AGENT,Cainiao4iPhone*),(DOMAIN,amdc.m.taobao.com,extended-matching)),REJECT
+DOMAIN,amdc.m.taobao.com,REJECT
+DOMAIN,amdc.wapa.taobao.com,REJECT
+DOMAIN-SUFFIX,ut.cainiao.com,REJECT
+DOMAIN-SUFFIX,log.aliyuncs.com,REJECT
+DOMAIN,fourier.taobao.com,REJECT
+DOMAIN,fourier.alibaba.com,REJECT
+AND,((DOMAIN-SUFFIX,cainiao.com),(PROTOCOL,UDP),(DEST-PORT,443)),REJECT-NO-DROP
+AND,((DOMAIN-SUFFIX,taobao.com),(PROTOCOL,UDP),(DEST-PORT,443)),REJECT-NO-DROP
+AND,((DOMAIN-SUFFIX,alicdn.com),(PROTOCOL,UDP),(DEST-PORT,443)),REJECT-NO-DROP
+
+[URL Rewrite]
+# 开屏、寄件券弹窗与曝光广告接口直接拦截
+^https?:\/\/[^\/]+\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.(nbnetflow\.)?ads\.(index|m?show|expose) - reject
+^https?:\/\/[^\/]+\.cainiao\.com\/gw\/mtop\.cainiao\.adkeyword\.get - reject
+^https?:\/\/[^\/]+\.cainiao\.com\/gw\/mtop\.cainiao\.adx\.flyad\.getad - reject
+
+[Body Rewrite]
+# 1. 首页与我的页面：移除横幅/活动/VIP/弹窗节点
+http-response-jq ^https?:\/\/[^\/]+\.cainiao\.com\/gw\/mtop\.cainiao\.app\.e2e\.engine\.page\.fetch 'del(.data.data.banner, .data.data.activity, .data.data.vip, .data.data.data.operationList) | del(.. | .popLayer?, .popup?, .dialog?, .floatLayer?, .marketingPopup?)'
+
+# 2. 寄件券与开屏/设置页广告接口（同时覆盖 nbnetflow.ads 与 guoguo.ads，干掉省钱攻略弹窗）
+http-response-jq ^https?:\/\/[^\/]+\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.(nbnetflow\.)?ads 'if (.data.result | type) == "array" and (.data.result | any(.materialId == "39017")) then .data.result |= map(select(.materialId == "39017")) else .data = {} end'
+
+# 3. 寄件页其他业务网关：剥离所有活动弹窗节点
+http-response-jq ^https?:\/\/(gguser-mtop|caps-mtop|mtop-bff-mtop)\.cainiao\.com\/gw\/ 'del(.. | .popup?, .popLayer?, .dialog?, .dialogList?, .popList?, .activityPopup?, .floatLayer?, .marketingInfo?, .benefitPopup?, .couponDialog?)'
+
+[MITM]
+hostname = %APPEND% *.cainiao.com, *.m.cainiao.com, page.cainiao.com
